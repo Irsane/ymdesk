@@ -10,6 +10,11 @@ on:
 permissions:
   contents: write
 
+# Новый запуск отменяет предыдущий незавершённый — без гонки за один Release.
+concurrency:
+  group: build-windows
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -25,10 +30,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # electron-builder иногда не докачивает бинарник Electron (EOF).
+      # Повторяем до 3 раз, чтобы пережить временные сетевые сбои.
       - name: Build renderer + package Windows app
-        run: npm run dist
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $max = 3
+          for ($i = 1; $i -le $max; $i++) {
+            Write-Host "=== Попытка сборки $i из $max ==="
+            npm run dist
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "Сборка упала (код $LASTEXITCODE). Повтор через 15с..."
+            Start-Sleep -Seconds 15
+          }
+          Write-Error "Сборка не удалась после $max попыток"
+          exit 1
 
       # Артефакты сборки доступны во вкладке Actions (запасной способ скачать).
       - name: Upload build artifacts
