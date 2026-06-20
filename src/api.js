@@ -35,6 +35,7 @@ export const api = {
   setMini: (on) => window.ym.setMini(on),
 
   // VK
+  vkOauth: () => ym.vkOauth(),
   vkAuth: (payload) => ym.vkAuth(payload),
   vkGetToken: () => ym.vkGetToken(),
   vkSetToken: (t) => ym.vkSetToken(t),

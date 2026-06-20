@@ -147,6 +147,46 @@ function vkTokenOrThrow() {
 }
 const vkUid = () => store.get('vkUid')
 
+// Вход через настоящую страницу VK в отдельном окне — токен ловим из
+// редиректа на blank.html. Пользователь логинится на сайте VK, не у нас.
+const VK_OAUTH = 'https://oauth.vk.com/authorize?client_id=2685278&scope=audio,offline,friends&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1&v=5.131'
+const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+
+ipcMain.handle('vk:oauth', async () => {
+  return new Promise((resolve) => {
+    const authWin = new BrowserWindow({
+      width: 520, height: 720, title: 'Вход в VK', autoHideMenuBar: true,
+      parent: mainWindow, modal: true,
+      webPreferences: { nodeIntegration: false, contextIsolation: true, partition: 'vk-oauth' }
+    })
+    let done = false
+    const tryUrl = async (url) => {
+      if (done || !url) return
+      const m = url.match(/[#&]access_token=([^&]+)/)
+      if (!m) return
+      done = true
+      const token = m[1]
+      try {
+        store.set('vkToken', token)
+        const profile = await vk.getProfile(token)
+        store.set('vkUid', profile.id)
+        store.set('vkProfile', profile)
+        resolve({ status: 'ok', profile })
+      } catch (e) {
+        resolve({ status: 'error', error: e.message })
+      }
+      try { authWin.close() } catch { /* */ }
+    }
+    const wc = authWin.webContents
+    wc.on('will-redirect', (_e, url) => tryUrl(url))
+    wc.on('did-redirect-navigation', (_e, url) => tryUrl(url))
+    wc.on('did-navigate', (_e, url) => tryUrl(url))
+    wc.on('did-navigate-in-page', (_e, url) => tryUrl(url))
+    authWin.on('closed', () => { if (!done) resolve({ status: 'cancelled' }) })
+    authWin.loadURL(VK_OAUTH, { userAgent: DESKTOP_UA })
+  })
+})
+
 // Вход по логину/паролю. device_id фиксируем, чтобы 2FA/повтор работали стабильно.
 ipcMain.handle('vk:auth', async (_e, payload) => {
   try {

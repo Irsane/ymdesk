@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
 
-// Форма входа в VK. По умолчанию — логин/пароль (только так токен получает
-// доступ к музыке). Поддержаны 2FA и капча. Есть запасной ввод токена.
+// Вход в VK. Основной способ — окно настоящего сайта VK (токен ловится
+// автоматически). Логин/пароль и готовый токен — запасные варианты.
 export default function VkAuthForm({ onConnected }) {
-  const [mode, setMode] = useState('password')   // 'password' | 'token'
+  const [mode, setMode] = useState('browser') // 'browser' | 'password' | 'token'
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')           // 2FA
+  const [code, setCode] = useState('')
   const [need2fa, setNeed2fa] = useState(false)
   const [phone, setPhone] = useState('')
   const [captchaSid, setCaptchaSid] = useState(null)
@@ -16,6 +16,16 @@ export default function VkAuthForm({ onConnected }) {
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+
+  const browserLogin = async () => {
+    setBusy(true); setError(null)
+    try {
+      const res = await api.vkOauth()
+      if (res.status === 'ok') onConnected(res.profile)
+      else if (res.status === 'cancelled') setError('Вход отменён')
+      else setError(res.error || 'Не удалось войти')
+    } catch (err) { setError(err.message) } finally { setBusy(false) }
+  }
 
   const loginPassword = async (e) => {
     e.preventDefault()
@@ -39,59 +49,56 @@ export default function VkAuthForm({ onConnected }) {
     e.preventDefault()
     if (!token.trim()) return
     setBusy(true); setError(null)
-    try {
-      const profile = await api.vkSetToken(token.trim())
-      onConnected(profile)
-    } catch (err) { setError(err.message || 'Неверный токен') } finally { setBusy(false) }
+    try { onConnected(await api.vkSetToken(token.trim())) }
+    catch (err) { setError(err.message || 'Неверный токен') } finally { setBusy(false) }
   }
 
   return (
     <div className="vk-auth">
       <div className="vk-tabs">
-        <button className={`vk-tab ${mode === 'password' ? 'active' : ''}`} onClick={() => setMode('password')}>Логин и пароль</button>
-        <button className={`vk-tab ${mode === 'token' ? 'active' : ''}`} onClick={() => setMode('token')}>Токен</button>
+        <button className={`vk-tab ${mode === 'browser' ? 'active' : ''}`} onClick={() => { setMode('browser'); setError(null) }}>Через VK</button>
+        <button className={`vk-tab ${mode === 'password' ? 'active' : ''}`} onClick={() => { setMode('password'); setError(null) }}>Логин/пароль</button>
+        <button className={`vk-tab ${mode === 'token' ? 'active' : ''}`} onClick={() => { setMode('token'); setError(null) }}>Токен</button>
       </div>
 
-      {mode === 'password' ? (
-        <form onSubmit={loginPassword}>
-          <input className="token-input" placeholder="Телефон или email"
-            value={login} onChange={(e) => setLogin(e.target.value)} autoFocus />
-          <input className="token-input" type="password" placeholder="Пароль"
-            value={password} onChange={(e) => setPassword(e.target.value)} />
+      {mode === 'browser' && (
+        <div>
+          <button className="btn-primary" onClick={browserLogin} disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
+            {busy ? 'Ожидание входа…' : 'Войти через VK'}
+          </button>
+          {error && <div className="login-error" style={{ marginTop: 10 }}>{error}</div>}
+          <p className="hint" style={{ marginTop: 10 }}>
+            Откроется официальная страница VK — вы входите прямо на сайте VK, а
+            приложение само получит доступ. Пароль вводится только на vk.com.
+          </p>
+        </div>
+      )}
 
-          {need2fa && (
-            <input className="token-input" placeholder={`Код подтверждения${phone ? ` (${phone})` : ''}`}
-              value={code} onChange={(e) => setCode(e.target.value)} />
-          )}
+      {mode === 'password' && (
+        <form onSubmit={loginPassword}>
+          <input className="token-input" placeholder="Телефон или email" value={login} onChange={(e) => setLogin(e.target.value)} autoFocus />
+          <input className="token-input" type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} />
+          {need2fa && <input className="token-input" placeholder={`Код подтверждения${phone ? ` (${phone})` : ''}`} value={code} onChange={(e) => setCode(e.target.value)} />}
           {captchaImg && (
             <div className="vk-captcha">
               <img src={captchaImg} alt="captcha" />
-              <input className="token-input" placeholder="Символы с картинки"
-                value={captchaKey} onChange={(e) => setCaptchaKey(e.target.value)} />
+              <input className="token-input" placeholder="Символы с картинки" value={captchaKey} onChange={(e) => setCaptchaKey(e.target.value)} />
             </div>
           )}
-
           {error && <div className="login-error">{error}</div>}
           <button className="btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
-            {busy ? 'Входим…' : 'Войти в VK'}
+            {busy ? 'Входим…' : 'Войти'}
           </button>
-          <p className="hint" style={{ marginTop: 10 }}>
-            Логин и пароль уходят напрямую в VK (oauth.vk.com) и нигде не сохраняются —
-            хранится только полученный токен. Это неофициальный доступ к музыке, на свой риск.
-          </p>
         </form>
-      ) : (
+      )}
+
+      {mode === 'token' && (
         <form onSubmit={useToken}>
-          <input className="token-input" type="password" placeholder="Готовый VK-токен (Kate Mobile)"
-            value={token} onChange={(e) => setToken(e.target.value)} autoFocus />
+          <input className="token-input" type="password" placeholder="VK-токен с доступом к аудио" value={token} onChange={(e) => setToken(e.target.value)} autoFocus />
           {error && <div className="login-error">{error}</div>}
           <button className="btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
             {busy ? 'Проверяем…' : 'Подключить'}
           </button>
-          <p className="hint" style={{ marginTop: 10 }}>
-            Подойдёт только токен с доступом к аудио (Kate Mobile). Обычный браузерный
-            токен музыку не отдаёт — используйте вход по логину/паролю.
-          </p>
         </form>
       )}
     </div>

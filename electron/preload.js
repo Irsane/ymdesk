@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('ym', {
   setMini: (on) => ipcRenderer.invoke('window:set-mini', on),
 
   // VK
+  vkOauth: () => ipcRenderer.invoke('vk:oauth'),
   vkAuth: (payload) => ipcRenderer.invoke('vk:auth', payload),
   vkGetToken: () => ipcRenderer.invoke('vk:get-token'),
   vkSetToken: (t) => ipcRenderer.invoke('vk:set-token', t),
