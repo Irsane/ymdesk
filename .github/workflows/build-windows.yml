@@ -84,7 +84,6 @@ jobs:
           body: |
             **Hailu ${{ steps.ver.outputs.version }}** — десктоп-клиент для Windows.
 
-            - `Hailu Setup ${{ steps.ver.outputs.version }}.exe` — установщик (рекомендуется)
-            - `Hailu ${{ steps.ver.outputs.version }}.exe` — portable (без установки)
+            - `Hailu Setup ${{ steps.ver.outputs.version }}.exe` — установщик
           files: |
-            release/*.exe
+            release/*Setup*.exe

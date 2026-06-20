@@ -60,3 +60,13 @@ export const IconRepeat = (p) => wrap(
 
 export const IconVolume = (p) => wrap(
   <><path d="M11 5 6 9H3v6h3l5 4V5Z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 6a9 9 0 0 1 0 12" /></>, p)
+
+export const IconPalette = (p) => wrap(
+  <><path d="M12 3a9 9 0 1 0 0 18c.8 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1-.3-.3-.4-.6-.4-1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-8-9-8Z" /><circle cx="7.5" cy="11.5" r="1" /><circle cx="11" cy="7.5" r="1" /><circle cx="16" cy="9.5" r="1" /></>, p)
+
+export const IconLogout = (p) => wrap(
+  <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>, p)
+
+export const IconCheck = (p) => wrap(<path d="m20 6-11 11-5-5" />, p)
+
+export const IconClose = (p) => wrap(<><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>, p)
