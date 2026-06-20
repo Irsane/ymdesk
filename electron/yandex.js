@@ -131,6 +131,34 @@ async function getTrackUrl(token, trackId) {
   return `https://${host}/get-mp3/${sign}/${ts}${path}`
 }
 
+// --- Моя волна (rotor) ---
+
+// Информация о станции: текущие настройки и доступные значения
+// (характер/настроение, разнообразие, язык) для выбора в UI.
+async function getRotorInfo(token, station = 'user:onyourwave') {
+  const res = await apiFetch(token, `/rotor/station/${station}/info`)
+  // API может вернуть массив станций — берём первую.
+  return Array.isArray(res) ? res[0] : res
+}
+
+// Применить настройки волны (moodEnergy / diversity / language).
+async function setRotorSettings(token, station = 'user:onyourwave', settings = {}) {
+  return apiFetch(token, `/rotor/station/${station}/settings2`, {
+    method: 'POST',
+    body: settings
+  })
+}
+
+// Получить очередную порцию треков станции.
+async function getRotorTracks(token, station = 'user:onyourwave', lastTrackId) {
+  const params = { settings2: true }
+  if (lastTrackId) params.queue = lastTrackId
+  const res = await apiFetch(token, `/rotor/station/${station}/tracks`, { params })
+  return (res.sequence || [])
+    .filter(s => s.type === 'track' && s.track)
+    .map(s => s.track)
+}
+
 // Удобный helper: собрать URL обложки нужного размера.
 function coverUrl(uri, size = 400) {
   if (!uri) return null
@@ -147,5 +175,8 @@ module.exports = {
   search,
   setLike,
   getTrackUrl,
+  getRotorInfo,
+  setRotorSettings,
+  getRotorTracks,
   coverUrl
 }

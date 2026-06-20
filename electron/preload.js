@@ -18,5 +18,10 @@ contextBridge.exposeInMainWorld('ym', {
   liked: () => ipcRenderer.invoke('api:liked'),
   search: (text, opts) => ipcRenderer.invoke('api:search', text, opts),
   trackUrl: (trackId) => ipcRenderer.invoke('api:track-url', trackId),
-  like: (trackId, like) => ipcRenderer.invoke('api:like', trackId, like)
+  like: (trackId, like) => ipcRenderer.invoke('api:like', trackId, like),
+
+  // Моя волна
+  rotorInfo: (station) => ipcRenderer.invoke('api:rotor-info', station),
+  rotorSettings: (station, settings) => ipcRenderer.invoke('api:rotor-settings', station, settings),
+  rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId)
 })

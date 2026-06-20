@@ -1,9 +1,9 @@
 {
-  "name": "ymdesk",
+  "name": "hailu",
   "version": "1.0.0",
-  "description": "Полноценный десктоп-клиент Яндекс Музыки (Electron + React)",
+  "description": "Hailu — десктоп-клиент Яндекс Музыки (Electron + React)",
   "main": "electron/main.js",
-  "author": "ymdesk",
+  "author": "hailu",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently -k -n VITE,ELECTRON -c green,blue \"npm:dev:vite\" \"npm:dev:electron\"",
@@ -14,8 +14,8 @@
     "dist": "vite build && electron-builder"
   },
   "build": {
-    "appId": "com.ymdesk.app",
-    "productName": "YM Desk",
+    "appId": "com.hailu.app",
+    "productName": "Hailu",
     "files": [
       "electron/**/*",
       "dist/**/*",

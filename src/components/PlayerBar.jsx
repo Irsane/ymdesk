@@ -28,12 +28,19 @@ export default function PlayerBar() {
       <div className="pb-center">
         <div className="pb-controls">
           <button className={`pb-btn ${p.shuffle ? 'on' : ''}`} onClick={() => p.setShuffle(s => !s)} title="Перемешать">🔀</button>
+
           <button className="pb-btn" onClick={p.prev} title="Назад">⏮</button>
           <button className="pb-play" onClick={p.toggle} disabled={!track}>
             {p.loading ? <span className="spinner sm" /> : p.playing ? '⏸' : '▶'}
           </button>
           <button className="pb-btn" onClick={p.next} title="Вперёд">⏭</button>
-          <button className={`pb-btn ${p.repeat ? 'on' : ''}`} onClick={() => p.setRepeat(r => !r)} title="Повтор">🔁</button>
+          <button
+            className={`pb-btn repeat ${p.repeatMode !== 'off' ? 'on' : ''}`}
+            onClick={p.cycleRepeat}
+            title={p.repeatMode === 'one' ? 'Повтор одной песни' : p.repeatMode === 'all' ? 'Повтор очереди' : 'Повтор выключен'}
+          >
+            🔁{p.repeatMode === 'one' && <span className="repeat-one">1</span>}
+          </button>
         </div>
 
         <div className="pb-progress">

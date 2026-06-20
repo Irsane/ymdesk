@@ -24,7 +24,11 @@ export const api = {
   liked: () => call('liked'),
   search: (text, opts) => call('search', text, opts),
   trackUrl: (id) => call('trackUrl', id),
-  like: (id, like) => call('like', id, like)
+  like: (id, like) => call('like', id, like),
+
+  rotorInfo: (station) => call('rotorInfo', station),
+  rotorSettings: (station, settings) => call('rotorSettings', station, settings),
+  rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId)
 }
 
 // Сборка URL обложки нужного размера (логика дублирует main, но без сети).

@@ -42,7 +42,9 @@ function TrackRow({ track, index, list, player }) {
         if (active) player.toggle()
         else player.playQueue(list, index)
       }}>
-        {isPlaying ? '⏸' : '▶'}
+        {isPlaying
+          ? <span className="eq"><span /><span /><span /></span>
+          : '▶'}
       </button>
 
       <div className="track-cover">

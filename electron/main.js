@@ -1,6 +1,6 @@
 'use strict'
 
-const { app, BrowserWindow, ipcMain, shell, session } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, shell, session } = require('electron')
 const path = require('path')
 const Store = require('electron-store')
 const yandex = require('./yandex')
@@ -18,7 +18,9 @@ function createWindow() {
     height: 760,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#0f0f14',
+    title: 'Hailu',
+    backgroundColor: '#000000',
+    autoHideMenuBar: true,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -43,6 +45,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Убираем стандартное меню (File / Edit / View / Window / Help).
+  Menu.setApplicationMenu(null)
+
   // Аудио-поток грузится через <audio> в renderer. Чтобы CDN отдал mp3,
   // подставляем нужные заголовки на запросы к storage Яндекса.
   session.defaultSession.webRequest.onBeforeSendHeaders(
@@ -110,3 +115,8 @@ ipcMain.handle('api:liked', wrap(() => yandex.getLikedTracks(tokenOrThrow(), uid
 ipcMain.handle('api:search', wrap((text, opts) => yandex.search(tokenOrThrow(), text, opts)))
 ipcMain.handle('api:track-url', wrap((trackId) => yandex.getTrackUrl(tokenOrThrow(), trackId)))
 ipcMain.handle('api:like', wrap((trackId, like) => yandex.setLike(tokenOrThrow(), uid(), trackId, like)))
+
+// Моя волна (rotor)
+ipcMain.handle('api:rotor-info', wrap((station) => yandex.getRotorInfo(tokenOrThrow(), station)))
+ipcMain.handle('api:rotor-settings', wrap((station, settings) => yandex.setRotorSettings(tokenOrThrow(), station, settings)))
+ipcMain.handle('api:rotor-tracks', wrap((station, lastTrackId) => yandex.getRotorTracks(tokenOrThrow(), station, lastTrackId)))

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
+import Logo, { Wordmark } from './Logo.jsx'
 
 const NAV = [
   { name: 'home', label: 'Главная', icon: '🏠' },
@@ -19,7 +20,7 @@ export default function Sidebar({ view, setView, account, onLogout }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="logo-mark">♫</span> YM Desk
+        <Logo size={34} animated /> <Wordmark size={22} />
       </div>
 
       <nav className="nav">

@@ -9,27 +9,35 @@ export function PlayerProvider({ children }) {
   const audioRef = useRef(null)
   if (!audioRef.current) audioRef.current = new Audio()
 
-  const [queue, setQueue] = useState([])      // массив треков
-  const [index, setIndex] = useState(-1)      // позиция в очереди
+  // Источник правды для очереди — refs (чтобы читать актуальное в колбэках).
+  const queueRef = useRef([])
+  const indexRef = useRef(-1)
+  const extenderRef = useRef(null)   // async () => track[] — для бесконечной волны
+
   const [current, setCurrent] = useState(null)
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState(0) // секунды
+  const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [error, setError] = useState(null)
-  const [repeat, setRepeat] = useState(false)
+  const [repeatMode, setRepeatMode] = useState('off') // 'off' | 'all' | 'one'
   const [shuffle, setShuffle] = useState(false)
 
-  // Загружает прямую ссылку и запускает воспроизведение трека по индексу.
-  const playIndex = useCallback(async (q, i) => {
-    const track = q[i]
+  // Зеркала настроек в refs для чтения внутри обработчиков аудио.
+  const repeatRef = useRef(repeatMode)
+  const shuffleRef = useRef(shuffle)
+  useEffect(() => { repeatRef.current = repeatMode }, [repeatMode])
+  useEffect(() => { shuffleRef.current = shuffle }, [shuffle])
+
+  // Проиграть трек по индексу в текущей очереди.
+  const playAt = useCallback(async (i) => {
+    const track = queueRef.current[i]
     if (!track) return
+    indexRef.current = i
     setError(null)
     setLoading(true)
     setCurrent(track)
-    setIndex(i)
-    setQueue(q)
     try {
       const id = track.id || track.trackId
       const url = await api.trackUrl(String(id))
@@ -45,51 +53,71 @@ export function PlayerProvider({ children }) {
     }
   }, [])
 
-  // Запустить очередь треков с конкретного индекса.
+  // Запустить обычную очередь треков.
   const playQueue = useCallback((tracks, startIndex = 0) => {
     const clean = (tracks || []).filter(Boolean)
     if (!clean.length) return
-    playIndex(clean, startIndex)
-  }, [playIndex])
+    queueRef.current = clean
+    extenderRef.current = null
+    playAt(startIndex)
+  }, [playAt])
 
-  const next = useCallback(() => {
-    setQueue(q => {
-      setIndex(i => {
-        if (!q.length) return i
-        let n
-        if (shuffle) n = Math.floor(Math.random() * q.length)
-        else n = i + 1
-        if (n >= q.length) {
-          if (repeat) n = 0
-          else return i
-        }
-        playIndex(q, n)
-        return n
-      })
-      return q
-    })
-  }, [playIndex, shuffle, repeat])
+  // Запустить «Мою волну»: начальные треки + функция догрузки следующих.
+  const playWave = useCallback((tracks, extender) => {
+    const clean = (tracks || []).filter(Boolean)
+    if (!clean.length) return
+    queueRef.current = clean
+    extenderRef.current = extender || null
+    playAt(0)
+  }, [playAt])
+
+  // Переход к следующему треку. auto=true — вызван по окончании трека.
+  const next = useCallback(async (auto = false) => {
+    const audio = audioRef.current
+
+    // Повтор одной песни — только при автопереходе.
+    if (auto && repeatRef.current === 'one') {
+      audio.currentTime = 0
+      audio.play()
+      return
+    }
+
+    const q = queueRef.current
+    if (!q.length) return
+    let n = shuffleRef.current ? Math.floor(Math.random() * q.length) : indexRef.current + 1
+
+    if (n >= q.length && !shuffleRef.current) {
+      // Догрузить волну, если она активна.
+      if (extenderRef.current) {
+        try {
+          const more = await extenderRef.current()
+          if (more && more.length) {
+            queueRef.current = [...q, ...more]
+            playAt(n)
+            return
+          }
+        } catch { /* игнорируем — просто остановимся */ }
+      }
+      if (repeatRef.current === 'all') n = 0
+      else { setPlaying(false); return }
+    }
+    playAt(n)
+  }, [playAt])
 
   const prev = useCallback(() => {
     const audio = audioRef.current
     if (audio.currentTime > 3) { audio.currentTime = 0; return }
-    setQueue(q => {
-      setIndex(i => {
-        const n = i - 1
-        if (n < 0) { audio.currentTime = 0; return i }
-        playIndex(q, n)
-        return n
-      })
-      return q
-    })
-  }, [playIndex])
+    const n = indexRef.current - 1
+    if (n < 0) { audio.currentTime = 0; return }
+    playAt(n)
+  }, [playAt])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
-    if (!current) return
+    if (!queueRef.current.length) return
     if (audio.paused) { audio.play(); setPlaying(true) }
     else { audio.pause(); setPlaying(false) }
-  }, [current])
+  }, [])
 
   const seek = useCallback((sec) => {
     audioRef.current.currentTime = sec
@@ -101,13 +129,18 @@ export function PlayerProvider({ children }) {
     setVolume(v)
   }, [])
 
+  // Циклическое переключение режима повтора.
+  const cycleRepeat = useCallback(() => {
+    setRepeatMode(m => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'))
+  }, [])
+
   // Подписки на события <audio>.
   useEffect(() => {
     const audio = audioRef.current
     audio.volume = volume
     const onTime = () => setProgress(audio.currentTime)
     const onDur = () => setDuration(audio.duration || 0)
-    const onEnd = () => next()
+    const onEnd = () => next(true)
     const onPlay = () => setPlaying(true)
     const onPause = () => setPlaying(false)
     audio.addEventListener('timeupdate', onTime)
@@ -138,10 +171,10 @@ export function PlayerProvider({ children }) {
   }, [toggle])
 
   const value = {
-    queue, index, current, playing, loading, progress, duration, volume,
-    error, repeat, shuffle,
-    playQueue, toggle, next, prev, seek, changeVolume,
-    setRepeat, setShuffle,
+    current, playing, loading, progress, duration, volume,
+    error, repeatMode, shuffle,
+    playQueue, playWave, toggle, next, prev, seek, changeVolume,
+    cycleRepeat, setShuffle,
     isCurrent: (track) => current && (current.id || current.trackId) === (track.id || track.trackId)
   }
 

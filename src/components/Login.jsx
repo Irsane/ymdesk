@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
+import Logo, { Wordmark } from './Logo.jsx'
 
 // Ссылка на официальную страницу выдачи OAuth-токена Яндекс Музыки.
 const OAUTH_URL =
@@ -30,10 +31,10 @@ export default function Login({ onLogin }) {
     <div className="login">
       <div className="login-card">
         <div className="login-logo">
-          <span className="logo-mark">♫</span>
-          <h1>YM Desk</h1>
+          <Logo size={48} animated />
+          <Wordmark size={30} />
         </div>
-        <p className="login-sub">Десктоп-клиент Яндекс Музыки</p>
+        <p className="login-sub">Музыка без границ</p>
 
         <form onSubmit={submit}>
           <label className="field-label">OAuth-токен</label>

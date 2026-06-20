@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api, coverUrl } from '../api.js'
+import MyWave from '../components/MyWave.jsx'
 
 export default function Home({ setView }) {
   const [playlists, setPlaylists] = useState([])
@@ -22,13 +23,15 @@ export default function Home({ setView }) {
     })()
   }, [])
 
-  if (loading) return <div className="view"><div className="spinner" /></div>
-  if (error) return <div className="view"><div className="error-box">{error}</div></div>
-
   return (
     <div className="view">
-      <h2 className="view-title">Главная</h2>
-      <p className="view-sub">Персональные подборки для вас</p>
+      <MyWave />
+
+      <h2 className="view-title section-gap">Подборки для вас</h2>
+      <p className="view-sub">Персональные плейлисты на каждый день</p>
+
+      {loading && <div className="spinner" />}
+      {error && <div className="error-box">{error}</div>}
 
       <div className="card-grid">
         {playlists.map(pl => (
@@ -46,7 +49,7 @@ export default function Home({ setView }) {
             <div className="card-sub">{pl.trackCount || ''} треков</div>
           </button>
         ))}
-        {!playlists.length && <div className="muted">Подборки не найдены.</div>}
+        {!loading && !playlists.length && <div className="muted">Подборки не найдены.</div>}
       </div>
     </div>
   )
