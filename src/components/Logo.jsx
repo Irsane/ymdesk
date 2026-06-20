@@ -26,20 +26,7 @@ export default function Logo({ size = 32, animated = false }) {
   )
 }
 
-// Подпись-словомарка с акцентной волной-подчёркиванием.
+// Подпись-словомарка (градиентный текст).
 export function Wordmark({ size = 22 }) {
-  return (
-    <span className="brand-word" style={{ fontSize: size }}>
-      <span className="brand-text">Hailu</span>
-      <svg className="brand-underline" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <linearGradient id="ulg" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#a855f7" /><stop offset="1" stopColor="#ec4899" />
-          </linearGradient>
-        </defs>
-        <path d="M1 5 Q 12 1 24 5 T 48 5 T 72 5 T 99 4" fill="none"
-          stroke="url(#ulg)" strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
-    </span>
-  )
+  return <span className="brand-text" style={{ fontSize: size }}>Hailu</span>
 }

@@ -147,6 +147,27 @@ function vkTokenOrThrow() {
 }
 const vkUid = () => store.get('vkUid')
 
+// Вход по логину/паролю. device_id фиксируем, чтобы 2FA/повтор работали стабильно.
+ipcMain.handle('vk:auth', async (_e, payload) => {
+  try {
+    let deviceId = store.get('vkDeviceId')
+    if (!deviceId) { deviceId = require('crypto').randomBytes(8).toString('hex'); store.set('vkDeviceId', deviceId) }
+    const r = await vk.auth({ ...payload, deviceId })
+    if (r.token) {
+      store.set('vkToken', r.token)
+      const profile = await vk.getProfile(r.token)
+      store.set('vkUid', profile.id)
+      store.set('vkProfile', profile)
+      return { status: 'ok', profile }
+    }
+    if (r.needValidation) return { status: '2fa', phone: r.phone }
+    if (r.needCaptcha) return { status: 'captcha', captchaSid: r.captchaSid, captchaImg: r.captchaImg }
+    return { status: 'error', error: 'Не удалось войти' }
+  } catch (e) {
+    return { status: 'error', error: e.message || String(e) }
+  }
+})
+
 ipcMain.handle('vk:get-token', () => store.get('vkToken') || null)
 ipcMain.handle('vk:set-token', async (_e, token) => {
   const profile = await vk.getProfile(token)

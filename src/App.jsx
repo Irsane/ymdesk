@@ -25,21 +25,21 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const [t, vt] = await Promise.all([api.getToken(), api.vkGetToken()])
+      let vkOk = false
       if (vt) {
-        try { setVkAccount(await api.vkGetProfile()) } catch { /* ignore */ }
+        try { const p = await api.vkGetProfile(); setVkAccount(p); vkOk = !!p } catch { /* ignore */ }
       }
       if (t) {
-        try {
-          setAccount(await api.account())
-          setToken(t)
-        } catch { setToken(null) }
+        try { setAccount(await api.account()); setToken(t) } catch { setToken(null) }
       } else {
         setToken(null)
+        if (vkOk) setSource('vk') // только VK — стартуем с него
       }
     })()
   }, [])
 
-  const onLogin = useCallback((status, t) => { setAccount(status); setToken(t) }, [])
+  const onLogin = useCallback((status, t) => { setAccount(status); setToken(t); setSource('ya') }, [])
+  const onVk = useCallback((profile) => { setVkAccount(profile); setSource('vk') }, [])
 
   const onLogout = useCallback(async () => {
     // Выход из текущего источника.
@@ -65,8 +65,8 @@ export default function App() {
   if (token === undefined) {
     return <><Background /><div className="boot"><div className="spinner" /></div></>
   }
-  if (!token) {
-    return <><Background /><SnowOverlay /><Login onLogin={onLogin} /></>
+  if (!token && !vkAccount) {
+    return <><Background /><SnowOverlay /><Login onLogin={onLogin} onVk={onVk} /></>
   }
   if (mini) {
     return <MiniPlayer onRestore={exitMini} />

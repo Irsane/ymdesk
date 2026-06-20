@@ -115,13 +115,11 @@ input[type=range] { cursor: pointer; }
 .logo-svg { display: block; border-radius: 14px; box-shadow: var(--glow); }
 .logo-svg.animated { animation: logoBreathe 3.2s ease-in-out infinite; transform-origin: center; }
 @keyframes logoBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-.brand-word { position: relative; display: inline-flex; flex-direction: column; line-height: 1; }
 .brand-text {
   font-weight: 900; letter-spacing: -.5px;
   background: var(--accent-grad); -webkit-background-clip: text;
   background-clip: text; color: transparent;
 }
-.brand-underline { width: 100%; height: .3em; margin-top: 2px; overflow: visible; }
 
 /* ---------- Layout ---------- */
 .app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100%; animation: fadeIn .4s ease; }
@@ -452,6 +450,15 @@ input[type=range] { cursor: pointer; }
 .login-help a:hover { text-decoration: underline; }
 .login-help .hint { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin-top: 10px; }
 .login-help code { background: var(--glass-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+/* ---------- VK auth ---------- */
+.vk-tabs { display: flex; gap: 5px; padding: 4px; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 12px; margin-bottom: 16px; }
+.vk-tab { flex: 1; padding: 9px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); transition: all .16s; }
+.vk-tab:hover { color: var(--text); }
+.vk-tab.active { background: var(--accent-grad); color: #0a0010; box-shadow: var(--glow); }
+.vk-auth .token-input { margin-bottom: 12px; }
+.vk-captcha { margin-bottom: 12px; }
+.vk-captcha img { display: block; border-radius: 8px; margin-bottom: 8px; background: #fff; }
 
 /* ---------- Player bar ---------- */
 .playerbar {

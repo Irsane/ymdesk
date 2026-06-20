@@ -51,6 +51,41 @@ function normPlaylist(p) {
   }
 }
 
+// --- Авторизация по логину/паролю (Kate Mobile) ---
+// Только так выдаётся токен с РЕАЛЬНЫМ доступом к аудио. Браузерный
+// implicit-токен музыку больше не отдаёт. Пароль уходит напрямую на
+// oauth.vk.com и нигде не сохраняется.
+const KATE = { id: '2685278', secret: 'lxhD8OD7dMsqtXIm5IUY' }
+
+async function auth({ login, password, code, captchaSid, captchaKey, deviceId }) {
+  const u = new URL('https://oauth.vk.com/token')
+  const p = u.searchParams
+  p.set('grant_type', 'password')
+  p.set('client_id', KATE.id)
+  p.set('client_secret', KATE.secret)
+  p.set('username', login)
+  p.set('password', password)
+  p.set('scope', 'audio,offline')
+  p.set('2fa_supported', '1')
+  p.set('v', V)
+  p.set('lang', 'ru')
+  if (deviceId) p.set('device_id', deviceId)
+  if (code) p.set('code', code)
+  if (captchaSid) { p.set('captcha_sid', captchaSid); p.set('captcha_key', captchaKey || '') }
+
+  const res = await fetch(u, { headers: { 'User-Agent': UA } })
+  const j = await res.json()
+
+  if (j.access_token) return { token: j.access_token, userId: j.user_id }
+  if (j.error === 'need_validation') {
+    return { needValidation: true, phone: j.phone_mask, type: j.validation_type }
+  }
+  if (j.error === 'need_captcha') {
+    return { needCaptcha: true, captchaSid: j.captcha_sid, captchaImg: j.captcha_img }
+  }
+  throw new Error(j.error_description || j.error || 'Ошибка входа VK')
+}
+
 async function getProfile(token) {
   const r = await vkFetch(token, 'users.get', { fields: 'photo_200' })
   return Array.isArray(r) ? r[0] : r
@@ -84,5 +119,5 @@ async function getRecommendations(token) {
 }
 
 module.exports = {
-  getProfile, search, userAudios, getPlaylists, getPlaylist, getRecommendations
+  auth, getProfile, search, userAudios, getPlaylists, getPlaylist, getRecommendations
 }
