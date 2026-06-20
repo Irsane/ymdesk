@@ -25,7 +25,7 @@
       "output": "release"
     },
     "mac": { "category": "public.app-category.music" },
-    "win": { "target": "nsis" },
+    "win": { "target": ["nsis", "portable"] },
     "linux": { "target": "AppImage", "category": "Audio" }
   },
   "dependencies": {
