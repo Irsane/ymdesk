@@ -3,10 +3,10 @@ import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr, fmtTime } from '../api.js'
 import {
   IconPlay, IconPause, IconNext, IconPrev,
-  IconShuffle, IconRepeat, IconVolume
+  IconShuffle, IconRepeat, IconVolume, IconMinimize
 } from './Icons.jsx'
 
-export default function PlayerBar() {
+export default function PlayerBar({ onMini }) {
   const p = usePlayer()
   const track = p.current
   const cover = coverUrl(track?.coverUri || track?.ogImage, 100)
@@ -72,6 +72,9 @@ export default function PlayerBar() {
           onChange={(e) => p.changeVolume(parseFloat(e.target.value))}
           style={{ '--pct': `${p.volume * 100}%` }}
         />
+        <button className="icon-btn pb-mini" onClick={onMini} title="Мини-плеер">
+          <IconMinimize size={18} />
+        </button>
       </div>
     </div>
   )

@@ -19,6 +19,8 @@ export const api = {
 
   account: () => call('account'),
   feed: () => call('feed'),
+  newPlaylists: () => call('newPlaylists'),
+  chart: () => call('chart'),
   playlists: () => call('playlists'),
   playlist: (ownerUid, kind) => call('playlist', ownerUid, kind),
   liked: () => call('liked'),
@@ -28,7 +30,9 @@ export const api = {
 
   rotorInfo: (station) => call('rotorInfo', station),
   rotorSettings: (station, settings) => call('rotorSettings', station, settings),
-  rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId)
+  rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId),
+
+  setMini: (on) => window.ym.setMini(on)
 }
 
 // Сборка URL обложки нужного размера (логика дублирует main, но без сети).

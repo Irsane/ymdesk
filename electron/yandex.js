@@ -64,6 +64,18 @@ async function getFeed(token) {
   return apiFetch(token, '/feed')
 }
 
+// Новые плейлисты редакции (много карточек для главной).
+async function getNewPlaylists(token) {
+  const res = await apiFetch(token, '/landing3/new-playlists')
+  return res?.newPlaylists || res?.result?.newPlaylists || []
+}
+
+// Чарт (топ треков) — как плейлист.
+async function getChart(token) {
+  const res = await apiFetch(token, '/landing3/chart')
+  return res?.chart || res
+}
+
 // Список плейлистов пользователя.
 async function getUserPlaylists(token, uid) {
   return apiFetch(token, `/users/${uid}/playlists/list`)
@@ -168,6 +180,8 @@ function coverUrl(uri, size = 400) {
 module.exports = {
   getAccountStatus,
   getFeed,
+  getNewPlaylists,
+  getChart,
   getUserPlaylists,
   getPlaylist,
   getLikedTracks,

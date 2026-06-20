@@ -32,8 +32,11 @@ img { -webkit-user-drag: none; }
 input[type=range] { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
-  .bg-canvas { display: none; }
+  .bg-canvas, .snow-overlay { display: none; }
 }
+
+/* Снежинки поверх всего приложения */
+.snow-overlay { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9000; pointer-events: none; }
 
 /* ===== Темы ===== */
 /* Супер тёмная — чистый чёрный (OLED). */
@@ -316,6 +319,26 @@ input[type=range] { cursor: pointer; }
 .modal-body { padding: 4px 22px 8px; overflow-y: auto; }
 .modal-foot { padding: 14px 22px 20px; border-top: 1px solid var(--glass-line); }
 .modal-foot .wave-play { width: 100%; justify-content: center; margin-top: 0; }
+
+/* ===== Мини-плеер ===== */
+.pb-mini { width: 34px; height: 34px; margin-left: 6px; }
+.mini {
+  position: relative; z-index: 1; height: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(40,28,60,.85), rgba(10,10,16,.92));
+  border: 1px solid var(--glass-line);
+}
+[data-theme="light"] .mini { background: linear-gradient(135deg, #fff, #efeaf7); }
+.mini-cover { width: 52px; height: 52px; border-radius: 11px; overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow); }
+.mini-cover img { width: 100%; height: 100%; object-fit: cover; }
+.mini-meta { min-width: 0; flex: 1; }
+.mini-title { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-artist { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pb-play.sm { width: 36px; height: 36px; }
+.mini-vol { display: flex; align-items: center; gap: 7px; color: var(--muted); flex-shrink: 0; }
+.mini-vol input[type=range] { width: 70px; }
+.mini-restore { flex-shrink: 0; }
 
 /* ---------- Card grid ---------- */
 .card-grid { display: grid; gap: 18px; margin-top: 22px; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }

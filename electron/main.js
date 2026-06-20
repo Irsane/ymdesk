@@ -1,6 +1,6 @@
 'use strict'
 
-const { app, BrowserWindow, Menu, ipcMain, shell, session } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, shell, session, screen } = require('electron')
 const path = require('path')
 const Store = require('electron-store')
 const yandex = require('./yandex')
@@ -109,12 +109,34 @@ function wrap(handler) {
 
 ipcMain.handle('api:account', wrap(() => yandex.getAccountStatus(tokenOrThrow())))
 ipcMain.handle('api:feed', wrap(() => yandex.getFeed(tokenOrThrow())))
+ipcMain.handle('api:new-playlists', wrap(() => yandex.getNewPlaylists(tokenOrThrow())))
+ipcMain.handle('api:chart', wrap(() => yandex.getChart(tokenOrThrow())))
 ipcMain.handle('api:playlists', wrap(() => yandex.getUserPlaylists(tokenOrThrow(), uid())))
 ipcMain.handle('api:playlist', wrap((ownerUid, kind) => yandex.getPlaylist(tokenOrThrow(), ownerUid || uid(), kind)))
 ipcMain.handle('api:liked', wrap(() => yandex.getLikedTracks(tokenOrThrow(), uid())))
 ipcMain.handle('api:search', wrap((text, opts) => yandex.search(tokenOrThrow(), text, opts)))
 ipcMain.handle('api:track-url', wrap((trackId) => yandex.getTrackUrl(tokenOrThrow(), trackId)))
 ipcMain.handle('api:like', wrap((trackId, like) => yandex.setLike(tokenOrThrow(), uid(), trackId, like)))
+
+// Мини-режим окна: компактный плеер поверх остальных окон.
+let prevBounds = null
+ipcMain.handle('window:set-mini', (_e, on) => {
+  if (!mainWindow) return
+  if (on) {
+    prevBounds = mainWindow.getBounds()
+    mainWindow.setMinimumSize(300, 96)
+    const wa = screen.getPrimaryDisplay().workAreaSize
+    mainWindow.setResizable(false)
+    mainWindow.setBounds({ width: 400, height: 128, x: wa.width - 420, y: wa.height - 170 })
+    mainWindow.setAlwaysOnTop(true)
+  } else {
+    mainWindow.setAlwaysOnTop(false)
+    mainWindow.setMinimumSize(900, 600)
+    mainWindow.setResizable(true)
+    if (prevBounds) mainWindow.setBounds(prevBounds)
+  }
+  return on
+})
 
 // Моя волна (rotor)
 ipcMain.handle('api:rotor-info', wrap((station) => yandex.getRotorInfo(tokenOrThrow(), station)))

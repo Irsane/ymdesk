@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { api } from '../api.js'
 import { usePlayer } from '../player.jsx'
 import { IconPlay, IconClose } from './Icons.jsx'
@@ -100,7 +101,7 @@ export default function MyWave() {
         </button>
       </div>
 
-      {open && (
+      {open && createPortal(
         <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
           <div className="modal" role="dialog" aria-label="Настройка волны">
             <div className="modal-head">
@@ -134,7 +135,8 @@ export default function MyWave() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   )

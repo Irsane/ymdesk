@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('ym', {
   // API (возвращают { ok, data } | { ok:false, error })
   account: () => ipcRenderer.invoke('api:account'),
   feed: () => ipcRenderer.invoke('api:feed'),
+  newPlaylists: () => ipcRenderer.invoke('api:new-playlists'),
+  chart: () => ipcRenderer.invoke('api:chart'),
   playlists: () => ipcRenderer.invoke('api:playlists'),
   playlist: (ownerUid, kind) => ipcRenderer.invoke('api:playlist', ownerUid, kind),
   liked: () => ipcRenderer.invoke('api:liked'),
@@ -23,5 +25,8 @@ contextBridge.exposeInMainWorld('ym', {
   // Моя волна
   rotorInfo: (station) => ipcRenderer.invoke('api:rotor-info', station),
   rotorSettings: (station, settings) => ipcRenderer.invoke('api:rotor-settings', station, settings),
-  rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId)
+  rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId),
+
+  // Управление окном
+  setMini: (on) => ipcRenderer.invoke('window:set-mini', on)
 })
