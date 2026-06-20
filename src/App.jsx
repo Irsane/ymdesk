@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
 import Background from './components/Background.jsx'
 import SnowOverlay from './components/SnowOverlay.jsx'
-import RainOverlay from './components/RainOverlay.jsx'
 import Login from './components/Login.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import PlayerBar from './components/PlayerBar.jsx'
@@ -56,7 +55,7 @@ export default function App() {
   }
 
   if (!token) {
-    return <><Background /><SnowOverlay /><RainOverlay /><Login onLogin={onLogin} /></>
+    return <><Background /><SnowOverlay /><Login onLogin={onLogin} /></>
   }
 
   // Мини-режим: только компактный плеер.
@@ -68,7 +67,6 @@ export default function App() {
     <div className="app">
       <Background />
       <SnowOverlay />
-      <RainOverlay />
       <div className="app-body">
         <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
         <main className="content">
