@@ -1,7 +1,7 @@
 import React from 'react'
 
-// Логотип Hailu — стилизованный эквалайзер в скруглённом квадрате
-// с фирменным градиентом. animated=true оживляет столбики.
+// Логотип Hailu — скруглённый квадрат с фирменным градиентом и
+// плавной звуковой волной. animated=true добавляет мягкое «дыхание».
 export default function Logo({ size = 32, animated = false }) {
   const id = React.useId()
   return (
@@ -15,12 +15,11 @@ export default function Logo({ size = 32, animated = false }) {
         </linearGradient>
       </defs>
       <rect width="48" height="48" rx="13" fill={`url(#g-${id})`} />
-      <g fill="#0a0010">
-        <rect className="bar b1" x="11" y="19" width="4.6" height="10" rx="2.3" />
-        <rect className="bar b2" x="18.4" y="13" width="4.6" height="22" rx="2.3" />
-        <rect className="bar b3" x="25.8" y="9" width="4.6" height="30" rx="2.3" />
-        <rect className="bar b4" x="33.2" y="16" width="4.6" height="16" rx="2.3" />
-      </g>
+      {/* Наушники */}
+      <path d="M13 31 V25 A11 11 0 0 1 35 25 V31" fill="none" stroke="#fff"
+        strokeWidth="3.7" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="9" y="28.5" width="7" height="11.5" rx="3" fill="#fff" />
+      <rect x="32" y="28.5" width="7" height="11.5" rx="3" fill="#fff" />
     </svg>
   )
 }

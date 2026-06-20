@@ -126,11 +126,8 @@ input[type=range] { cursor: pointer; }
 
 /* ---------- Logo ---------- */
 .logo-svg { display: block; border-radius: 14px; box-shadow: var(--glow); }
-.logo-svg.animated .bar { transform-box: fill-box; transform-origin: center bottom; }
-.logo-svg.animated .b1 { animation: logoBar 1.1s ease-in-out infinite; }
-.logo-svg.animated .b2 { animation: logoBar 1.1s ease-in-out infinite .15s; }
-.logo-svg.animated .b3 { animation: logoBar 1.1s ease-in-out infinite .3s; }
-.logo-svg.animated .b4 { animation: logoBar 1.1s ease-in-out infinite .45s; }
+.logo-svg.animated { animation: logoBreathe 3.2s ease-in-out infinite; transform-origin: center; }
+@keyframes logoBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 .wordmark {
   font-weight: 900; letter-spacing: -.5px;
   background: var(--accent-grad); -webkit-background-clip: text;

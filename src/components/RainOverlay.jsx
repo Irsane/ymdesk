@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useTheme } from '../theme.jsx'
 
-// Летняя гроза: дождь + редкие молнии + травка по нижнему краю.
+// Летняя гроза: дождь + редкие молнии + густая трава по нижнему краю.
 // Только в теме «летняя». Рисуется поверх всего приложения.
 export default function RainOverlay() {
   const { theme } = useTheme()
@@ -15,45 +15,46 @@ export default function RainOverlay() {
     const ctx = canvas.getContext('2d')
     const dpr = devicePixelRatio
     let raf, w, h, drops = [], blades = []
-    let t = 0
-    let flash = 0          // яркость вспышки молнии
-    let nextStrike = 120   // кадров до следующей молнии
-    let bolt = null        // ломаная текущей молнии
-    let boltLife = 0
+    let t = 0, flash = 0, nextStrike = 140, bolt = null, boltLife = 0
+
+    const spawnDrop = () => ({
+      x: Math.random() * w,
+      y: Math.random() * -h,
+      len: (Math.random() * 16 + 12) * dpr,
+      speed: (Math.random() * 9 + 12) * dpr,
+      alpha: Math.random() * 0.3 + 0.15
+    })
+
+    const buildGrass = () => {
+      blades = []
+      const step = 4.5 * dpr
+      for (let x = -step; x < w + step; x += step * (0.55 + Math.random() * 0.7)) {
+        const back = Math.random() < 0.5
+        blades.push({
+          x,
+          back,
+          w: (Math.random() * 4 + 4.5) * dpr,
+          h: (Math.random() * 48 + (back ? 60 : 38)) * dpr,
+          bend: (Math.random() - 0.5) * 34 * dpr,
+          phase: Math.random() * Math.PI * 2,
+          hue: 95 + Math.random() * 35,
+          light: (back ? 22 : 34) + Math.random() * 14
+        })
+      }
+      // Дальние травинки рисуем первыми (глубина).
+      blades.sort((a, b) => (a.back === b.back ? 0 : a.back ? -1 : 1))
+    }
 
     const resize = () => {
       w = canvas.width = window.innerWidth * dpr
       h = canvas.height = window.innerHeight * dpr
-
-      const dropCount = Math.min(280, Math.floor(w / dpr / 4))
-      drops = Array.from({ length: dropCount }, spawnDrop)
-
-      // Травинки вдоль всего нижнего края.
-      blades = []
-      const step = 9 * dpr
-      for (let x = 0; x < w + step; x += step) {
-        blades.push({
-          x: x + (Math.random() - 0.5) * step,
-          h: (Math.random() * 46 + 36) * dpr,
-          lean: (Math.random() - 0.5) * 0.5,
-          phase: Math.random() * Math.PI * 2,
-          shade: Math.random() * 0.4 + 0.6
-        })
-      }
+      drops = Array.from({ length: Math.min(280, Math.floor(w / dpr / 4)) }, spawnDrop)
+      buildGrass()
     }
-
-    const spawnDrop = () => ({
-      x: Math.random() * w,
-      y: Math.random() * h - h,
-      len: (Math.random() * 18 + 12) * dpr,
-      speed: (Math.random() * 9 + 11) * dpr,
-      alpha: Math.random() * 0.35 + 0.18
-    })
 
     const makeBolt = () => {
       const segs = []
-      let x = Math.random() * w * 0.8 + w * 0.1
-      let y = 0
+      let x = Math.random() * w * 0.8 + w * 0.1, y = 0
       const target = h * (0.4 + Math.random() * 0.3)
       segs.push([x, y])
       while (y < target) {
@@ -64,17 +65,36 @@ export default function RainOverlay() {
       return segs
     }
 
+    const drawBlade = (b) => {
+      const sway = Math.sin(t * 0.018 + b.phase) * 9 * dpr + (flash > 0 ? 0 : 0)
+      const baseY = h + 2
+      const tipX = b.x + b.bend + sway
+      const tipY = baseY - b.h
+      const hw = b.w / 2
+      const cx = (b.x + tipX) / 2
+      const g = ctx.createLinearGradient(b.x, baseY, tipX, tipY)
+      g.addColorStop(0, `hsl(${b.hue} 60% ${b.light * 0.55}%)`)
+      g.addColorStop(1, `hsl(${b.hue} 70% ${b.light + 14}%)`)
+      ctx.fillStyle = g
+      ctx.beginPath()
+      ctx.moveTo(b.x - hw, baseY)
+      ctx.quadraticCurveTo(cx - hw * 0.6, baseY - b.h * 0.55, tipX, tipY)
+      ctx.quadraticCurveTo(cx + hw * 0.6, baseY - b.h * 0.55, b.x + hw, baseY)
+      ctx.closePath()
+      ctx.fill()
+    }
+
     const draw = () => {
       t += 1
       ctx.clearRect(0, 0, w, h)
 
       // Дождь.
       ctx.lineCap = 'round'
+      ctx.lineWidth = 1.4 * dpr
       for (const d of drops) {
         d.y += d.speed
         d.x += d.speed * 0.18
-        ctx.strokeStyle = `rgba(170,210,255,${d.alpha})`
-        ctx.lineWidth = 1.4 * dpr
+        ctx.strokeStyle = `rgba(175,212,255,${d.alpha})`
         ctx.beginPath()
         ctx.moveTo(d.x, d.y)
         ctx.lineTo(d.x - d.len * 0.18, d.y - d.len)
@@ -82,12 +102,11 @@ export default function RainOverlay() {
         if (d.y > h + 20) Object.assign(d, spawnDrop(), { y: -20 })
       }
 
-      // Молния: таймер → вспышка + ломаная.
-      nextStrike -= 1
-      if (nextStrike <= 0) {
-        flash = Math.random() * 0.35 + 0.45
+      // Молния.
+      if (--nextStrike <= 0) {
+        flash = Math.random() * 0.35 + 0.4
         bolt = makeBolt(); boltLife = 7
-        nextStrike = Math.floor(Math.random() * 260 + 160)
+        nextStrike = Math.floor(Math.random() * 280 + 160)
       }
       if (flash > 0) {
         ctx.fillStyle = `rgba(210,225,255,${flash})`
@@ -107,21 +126,14 @@ export default function RainOverlay() {
         boltLife -= 1
       }
 
-      // Травка по нижнему краю.
-      for (const b of blades) {
-        const sway = Math.sin(t * 0.03 + b.phase) * 0.18 + b.lean
-        const tipX = b.x + sway * b.h
-        const tipY = h - b.h
-        const grad = ctx.createLinearGradient(b.x, h, tipX, tipY)
-        grad.addColorStop(0, `rgba(${Math.round(34 * b.shade)},${Math.round(120 * b.shade)},${Math.round(50 * b.shade)},1)`)
-        grad.addColorStop(1, `rgba(${Math.round(90 * b.shade)},${Math.round(210 * b.shade)},${Math.round(110 * b.shade)},1)`)
-        ctx.strokeStyle = grad
-        ctx.lineWidth = 3 * dpr
-        ctx.beginPath()
-        ctx.moveTo(b.x, h + 2)
-        ctx.quadraticCurveTo((b.x + tipX) / 2 + sway * 10 * dpr, h - b.h * 0.5, tipX, tipY)
-        ctx.stroke()
-      }
+      // Земля + трава.
+      const gh = 70 * dpr
+      const gg = ctx.createLinearGradient(0, h - gh, 0, h)
+      gg.addColorStop(0, 'rgba(10,38,20,0)')
+      gg.addColorStop(1, 'rgba(7,28,15,.6)')
+      ctx.fillStyle = gg
+      ctx.fillRect(0, h - gh, w, gh)
+      for (const b of blades) drawBlade(b)
 
       raf = requestAnimationFrame(draw)
     }
