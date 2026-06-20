@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { usePlayer } from '../player.jsx'
 import { api, coverUrl, artistsStr, fmtTime } from '../api.js'
+import { IconPlay, IconPause, IconHeart, IconHeartFilled } from './Icons.jsx'
 
 // Универсальный список треков. tracks — массив объектов трека.
 export default function TrackList({ tracks }) {
@@ -42,9 +43,8 @@ function TrackRow({ track, index, list, player }) {
         if (active) player.toggle()
         else player.playQueue(list, index)
       }}>
-        {isPlaying
-          ? <span className="eq"><span /><span /><span /></span>
-          : '▶'}
+        <span className="track-play-icon">{isPlaying ? <IconPause size={16} /> : <IconPlay size={16} />}</span>
+        {isPlaying && <span className="eq"><span /><span /><span /></span>}
       </button>
 
       <div className="track-cover">
@@ -60,7 +60,7 @@ function TrackRow({ track, index, list, player }) {
       </div>
 
       <button className={`track-like ${liked ? 'on' : ''}`} onClick={toggleLike} title="Мне нравится">
-        {liked ? '❤️' : '🤍'}
+        {liked ? <IconHeartFilled size={17} /> : <IconHeart size={17} />}
       </button>
 
       <div className="track-dur">{fmtTime((track.durationMs || 0) / 1000)}</div>

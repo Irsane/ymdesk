@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
 import { usePlayer } from '../player.jsx'
+import { IconPlay } from './Icons.jsx'
 
 const STATION = 'user:onyourwave'
 
@@ -95,7 +96,7 @@ export default function MyWave() {
         {error && <div className="wave-error">{error}</div>}
 
         <button className="wave-play" onClick={playWave} disabled={loading}>
-          {loading ? <span className="spinner sm" /> : '▶'} Слушать волну
+          {loading ? <span className="spinner sm" /> : <IconPlay size={18} />} Слушать волну
         </button>
       </div>
     </section>

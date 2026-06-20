@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
+import Background from './components/Background.jsx'
 import Login from './components/Login.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import PlayerBar from './components/PlayerBar.jsx'
@@ -44,15 +45,16 @@ export default function App() {
   }, [])
 
   if (token === undefined) {
-    return <div className="boot"><div className="spinner" /></div>
+    return <><Background /><div className="boot"><div className="spinner" /></div></>
   }
 
   if (!token) {
-    return <Login onLogin={onLogin} />
+    return <><Background /><Login onLogin={onLogin} /></>
   }
 
   return (
     <div className="app">
+      <Background />
       <div className="app-body">
         <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
         <main className="content">

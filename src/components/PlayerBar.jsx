@@ -1,6 +1,10 @@
 import React from 'react'
 import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr, fmtTime } from '../api.js'
+import {
+  IconPlay, IconPause, IconNext, IconPrev,
+  IconShuffle, IconRepeat, IconVolume
+} from './Icons.jsx'
 
 export default function PlayerBar() {
   const p = usePlayer()
@@ -27,19 +31,21 @@ export default function PlayerBar() {
 
       <div className="pb-center">
         <div className="pb-controls">
-          <button className={`pb-btn ${p.shuffle ? 'on' : ''}`} onClick={() => p.setShuffle(s => !s)} title="Перемешать">🔀</button>
-
-          <button className="pb-btn" onClick={p.prev} title="Назад">⏮</button>
-          <button className="pb-play" onClick={p.toggle} disabled={!track}>
-            {p.loading ? <span className="spinner sm" /> : p.playing ? '⏸' : '▶'}
+          <button className={`pb-btn ${p.shuffle ? 'on' : ''}`} onClick={() => p.setShuffle(s => !s)} title="Перемешать">
+            <IconShuffle size={19} />
           </button>
-          <button className="pb-btn" onClick={p.next} title="Вперёд">⏭</button>
+          <button className="pb-btn" onClick={p.prev} title="Назад"><IconPrev size={22} /></button>
+          <button className="pb-play" onClick={p.toggle} disabled={!track}>
+            {p.loading ? <span className="spinner sm" /> : p.playing ? <IconPause size={22} /> : <IconPlay size={22} />}
+          </button>
+          <button className="pb-btn" onClick={p.next} title="Вперёд"><IconNext size={22} /></button>
           <button
             className={`pb-btn repeat ${p.repeatMode !== 'off' ? 'on' : ''}`}
             onClick={p.cycleRepeat}
             title={p.repeatMode === 'one' ? 'Повтор одной песни' : p.repeatMode === 'all' ? 'Повтор очереди' : 'Повтор выключен'}
           >
-            🔁{p.repeatMode === 'one' && <span className="repeat-one">1</span>}
+            <IconRepeat size={19} />
+            {p.repeatMode === 'one' && <span className="repeat-one">1</span>}
           </button>
         </div>
 
@@ -58,7 +64,7 @@ export default function PlayerBar() {
       </div>
 
       <div className="pb-right">
-        <span className="vol-icon">🔊</span>
+        <span className="vol-icon"><IconVolume size={19} /></span>
         <input
           className="vol"
           type="range" min={0} max={1} step={0.01}

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import Logo, { Wordmark } from './Logo.jsx'
+import { IconHome, IconSearch, IconHeart } from './Icons.jsx'
 
 const NAV = [
-  { name: 'home', label: 'Главная', icon: '🏠' },
-  { name: 'search', label: 'Поиск', icon: '🔍' },
-  { name: 'liked', label: 'Мне нравится', icon: '❤️' }
+  { name: 'home', label: 'Главная', Icon: IconHome },
+  { name: 'search', label: 'Поиск', Icon: IconSearch },
+  { name: 'liked', label: 'Мне нравится', Icon: IconHeart }
 ]
 
 export default function Sidebar({ view, setView, account, onLogout }) {
@@ -30,7 +31,7 @@ export default function Sidebar({ view, setView, account, onLogout }) {
             className={`nav-item ${view.name === item.name ? 'active' : ''}`}
             onClick={() => setView({ name: item.name })}
           >
-            <span className="nav-icon">{item.icon}</span> {item.label}
+            <span className="nav-icon"><item.Icon size={20} /></span> {item.label}
           </button>
         ))}
       </nav>
