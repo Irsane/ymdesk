@@ -6,6 +6,7 @@ import Login from './components/Login.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import PlayerBar from './components/PlayerBar.jsx'
 import MiniPlayer from './components/MiniPlayer.jsx'
+import ConnectVk from './components/ConnectVk.jsx'
 import Home from './views/Home.jsx'
 import Search from './views/Search.jsx'
 import Liked from './views/Liked.jsx'
@@ -14,38 +15,49 @@ import Playlist from './views/Playlist.jsx'
 export default function App() {
   const [token, setToken] = useState(undefined) // undefined = ещё проверяем
   const [account, setAccount] = useState(null)
+  const [vkAccount, setVkAccount] = useState(null)
+  const [source, setSource] = useState('ya')      // 'ya' | 'vk'
   const [view, setView] = useState({ name: 'home' })
   const [mini, setMini] = useState(false)
+  const [vkModal, setVkModal] = useState(false)
 
-  // При старте читаем сохранённый токен.
+  // При старте читаем токены Яндекса и VK.
   useEffect(() => {
     (async () => {
-      const t = await api.getToken()
+      const [t, vt] = await Promise.all([api.getToken(), api.vkGetToken()])
+      if (vt) {
+        try { setVkAccount(await api.vkGetProfile()) } catch { /* ignore */ }
+      }
       if (t) {
         try {
-          const status = await api.account()
-          setAccount(status)
+          setAccount(await api.account())
           setToken(t)
-        } catch {
-          setToken(null) // токен протух
-        }
+        } catch { setToken(null) }
       } else {
         setToken(null)
       }
     })()
   }, [])
 
-  const onLogin = useCallback((status, t) => {
-    setAccount(status)
-    setToken(t)
-  }, [])
+  const onLogin = useCallback((status, t) => { setAccount(status); setToken(t) }, [])
 
   const onLogout = useCallback(async () => {
-    await api.logout()
-    setToken(null)
-    setAccount(null)
-    setView({ name: 'home' })
+    // Выход из текущего источника.
+    if (source === 'vk') {
+      await api.vkLogout(); setVkAccount(null); setSource('ya'); setView({ name: 'home' })
+      return
+    }
+    await api.logout(); setToken(null); setAccount(null); setView({ name: 'home' })
+  }, [source])
+
+  const onVkConnected = useCallback((profile) => {
+    setVkAccount(profile); setSource('vk'); setVkModal(false); setView({ name: 'home' })
   }, [])
+
+  const switchSource = useCallback((s) => {
+    if (s === 'vk' && !vkAccount) { setVkModal(true); return }
+    setSource(s); setView({ name: 'home' })
+  }, [vkAccount])
 
   const enterMini = useCallback(async () => { await api.setMini(true); setMini(true) }, [])
   const exitMini = useCallback(async () => { await api.setMini(false); setMini(false) }, [])
@@ -53,12 +65,9 @@ export default function App() {
   if (token === undefined) {
     return <><Background /><div className="boot"><div className="spinner" /></div></>
   }
-
   if (!token) {
     return <><Background /><SnowOverlay /><Login onLogin={onLogin} /></>
   }
-
-  // Мини-режим: только компактный плеер.
   if (mini) {
     return <MiniPlayer onRestore={exitMini} />
   }
@@ -68,15 +77,21 @@ export default function App() {
       <Background />
       <SnowOverlay />
       <div className="app-body">
-        <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
+        <Sidebar
+          view={view} setView={setView}
+          account={account} vkAccount={vkAccount}
+          source={source} switchSource={switchSource}
+          onLogout={onLogout}
+        />
         <main className="content">
-          {view.name === 'home' && <Home setView={setView} />}
-          {view.name === 'search' && <Search setView={setView} />}
-          {view.name === 'liked' && <Liked />}
+          {view.name === 'home' && <Home source={source} setView={setView} />}
+          {view.name === 'search' && <Search source={source} />}
+          {view.name === 'liked' && <Liked source={source} />}
           {view.name === 'playlist' && <Playlist info={view.playlist} />}
         </main>
       </div>
       <PlayerBar onMini={enterMini} />
+      {vkModal && <ConnectVk onClose={() => setVkModal(false)} onConnected={onVkConnected} />}
     </div>
   )
 }

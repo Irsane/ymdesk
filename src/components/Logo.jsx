@@ -1,7 +1,6 @@
 import React from 'react'
 
-// Логотип Hailu — скруглённый квадрат с фирменным градиентом и
-// плавной звуковой волной. animated=true добавляет мягкое «дыхание».
+// Знак Hailu — монограмма «H» в скруглённом бейдже с фирменным градиентом.
 export default function Logo({ size = 32, animated = false }) {
   const id = React.useId()
   return (
@@ -15,16 +14,32 @@ export default function Logo({ size = 32, animated = false }) {
         </linearGradient>
       </defs>
       <rect width="48" height="48" rx="13" fill={`url(#g-${id})`} />
-      {/* Наушники */}
-      <path d="M13 31 V25 A11 11 0 0 1 35 25 V31" fill="none" stroke="#fff"
-        strokeWidth="3.7" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="9" y="28.5" width="7" height="11.5" rx="3" fill="#fff" />
-      <rect x="32" y="28.5" width="7" height="11.5" rx="3" fill="#fff" />
+      {/* Монограмма H */}
+      <g fill="#fff">
+        <rect x="14" y="13" width="5.4" height="22" rx="2.7" />
+        <rect x="28.6" y="13" width="5.4" height="22" rx="2.7" />
+        <rect x="16" y="21.3" width="16" height="5.4" rx="2.7" />
+      </g>
+      {/* акцент-нотка */}
+      <circle cx="34" cy="14" r="3.1" fill="#fff" />
     </svg>
   )
 }
 
-// Текстовый логотип-словомарка.
+// Подпись-словомарка с акцентной волной-подчёркиванием.
 export function Wordmark({ size = 22 }) {
-  return <span className="wordmark" style={{ fontSize: size }}>Hailu</span>
+  return (
+    <span className="brand-word" style={{ fontSize: size }}>
+      <span className="brand-text">Hailu</span>
+      <svg className="brand-underline" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden>
+        <defs>
+          <linearGradient id="ulg" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#a855f7" /><stop offset="1" stopColor="#ec4899" />
+          </linearGradient>
+        </defs>
+        <path d="M1 5 Q 12 1 24 5 T 48 5 T 72 5 T 99 4" fill="none"
+          stroke="url(#ulg)" strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
+    </span>
+  )
 }

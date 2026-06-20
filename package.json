@@ -1,6 +1,6 @@
 {
   "name": "hailu",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Hailu — десктоп-клиент Яндекс Музыки (Electron + React)",
   "main": "electron/main.js",
   "author": "hailu",
@@ -24,8 +24,16 @@
     "directories": {
       "output": "release"
     },
-    "mac": { "category": "public.app-category.music", "icon": "build/icon.png" },
-    "win": { "target": ["nsis"], "icon": "build/icon.ico" },
+    "mac": {
+      "category": "public.app-category.music",
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
     "nsis": {
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
@@ -34,10 +42,15 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
-    "linux": { "target": "AppImage", "category": "Audio", "icon": "build/icon.png" }
+    "linux": {
+      "target": "AppImage",
+      "category": "Audio",
+      "icon": "build/icon.png"
+    }
   },
   "dependencies": {
-    "electron-store": "^8.2.0"
+    "electron-store": "^8.2.0",
+    "hls.js": "^1.6.16"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

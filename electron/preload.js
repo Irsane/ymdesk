@@ -28,5 +28,16 @@ contextBridge.exposeInMainWorld('ym', {
   rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId),
 
   // Управление окном
-  setMini: (on) => ipcRenderer.invoke('window:set-mini', on)
+  setMini: (on) => ipcRenderer.invoke('window:set-mini', on),
+
+  // VK
+  vkGetToken: () => ipcRenderer.invoke('vk:get-token'),
+  vkSetToken: (t) => ipcRenderer.invoke('vk:set-token', t),
+  vkGetProfile: () => ipcRenderer.invoke('vk:get-profile'),
+  vkLogout: () => ipcRenderer.invoke('vk:logout'),
+  vkSearch: (q) => ipcRenderer.invoke('api:vk-search', q),
+  vkAudios: () => ipcRenderer.invoke('api:vk-audios'),
+  vkPlaylists: () => ipcRenderer.invoke('api:vk-playlists'),
+  vkPlaylist: (ownerId, albumId, accessKey) => ipcRenderer.invoke('api:vk-playlist', ownerId, albumId, accessKey),
+  vkRecommendations: () => ipcRenderer.invoke('api:vk-recommendations')
 })

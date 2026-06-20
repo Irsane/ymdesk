@@ -4,6 +4,7 @@ const { app, BrowserWindow, Menu, ipcMain, shell, session, screen } = require('e
 const path = require('path')
 const Store = require('electron-store')
 const yandex = require('./yandex')
+const vk = require('./vk')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -137,6 +138,34 @@ ipcMain.handle('window:set-mini', (_e, on) => {
   }
   return on
 })
+
+// --- VK ---
+function vkTokenOrThrow() {
+  const t = store.get('vkToken')
+  if (!t) throw new Error('VK не подключён')
+  return t
+}
+const vkUid = () => store.get('vkUid')
+
+ipcMain.handle('vk:get-token', () => store.get('vkToken') || null)
+ipcMain.handle('vk:set-token', async (_e, token) => {
+  const profile = await vk.getProfile(token)
+  if (!profile?.id) throw new Error('Неверный VK-токен')
+  store.set('vkToken', token)
+  store.set('vkUid', profile.id)
+  store.set('vkProfile', profile)
+  return profile
+})
+ipcMain.handle('vk:get-profile', () => store.get('vkProfile') || null)
+ipcMain.handle('vk:logout', () => {
+  store.delete('vkToken'); store.delete('vkUid'); store.delete('vkProfile'); return true
+})
+
+ipcMain.handle('api:vk-search', wrap((q) => vk.search(vkTokenOrThrow(), q)))
+ipcMain.handle('api:vk-audios', wrap(() => vk.userAudios(vkTokenOrThrow(), vkUid())))
+ipcMain.handle('api:vk-playlists', wrap(() => vk.getPlaylists(vkTokenOrThrow(), vkUid())))
+ipcMain.handle('api:vk-playlist', wrap((ownerId, albumId, accessKey) => vk.getPlaylist(vkTokenOrThrow(), ownerId, albumId, accessKey)))
+ipcMain.handle('api:vk-recommendations', wrap(() => vk.getRecommendations(vkTokenOrThrow())))
 
 // Моя волна (rotor)
 ipcMain.handle('api:rotor-info', wrap((station) => yandex.getRotorInfo(tokenOrThrow(), station)))

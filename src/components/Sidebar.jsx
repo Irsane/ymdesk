@@ -11,20 +11,24 @@ const NAV = [
 ]
 
 function initials(name) {
-  return (name || '')
-    .split(/\s+/).filter(Boolean).slice(0, 2)
+  return (name || '').split(/\s+/).filter(Boolean).slice(0, 2)
     .map(w => w[0]?.toUpperCase()).join('') || 'U'
 }
 
-export default function Sidebar({ view, setView, account, onLogout }) {
+export default function Sidebar({ view, setView, account, vkAccount, source, switchSource, onLogout }) {
   const [playlists, setPlaylists] = useState([])
 
+  // Плейлисты текущего источника.
   useEffect(() => {
-    api.playlists().then(setPlaylists).catch(() => {})
-  }, [])
+    setPlaylists([])
+    const load = source === 'vk' ? api.vkPlaylists() : api.playlists()
+    load.then(setPlaylists).catch(() => {})
+  }, [source])
 
-  const name = account?.account?.fullName || account?.account?.login || 'Пользователь'
-  const sub = account?.account?.login
+  const name = source === 'vk'
+    ? [vkAccount?.first_name, vkAccount?.last_name].filter(Boolean).join(' ') || 'VK'
+    : (account?.account?.fullName || account?.account?.login || 'Пользователь')
+  const sub = source === 'vk' ? 'VK Музыка' : account?.account?.login
 
   return (
     <aside className="sidebar">
@@ -32,13 +36,16 @@ export default function Sidebar({ view, setView, account, onLogout }) {
         <Logo size={34} animated /> <Wordmark size={22} />
       </div>
 
+      <div className="source-switch">
+        <button className={`source-btn ${source === 'ya' ? 'active' : ''}`} onClick={() => switchSource('ya')}>Яндекс</button>
+        <button className={`source-btn ${source === 'vk' ? 'active' : ''}`} onClick={() => switchSource('vk')}>VK</button>
+      </div>
+
       <nav className="nav">
         {NAV.map(item => (
-          <button
-            key={item.name}
+          <button key={item.name}
             className={`nav-item ${view.name === item.name ? 'active' : ''}`}
-            onClick={() => setView({ name: item.name })}
-          >
+            onClick={() => setView({ name: item.name })}>
             <span className="nav-icon"><item.Icon size={20} /></span> {item.label}
           </button>
         ))}
@@ -49,12 +56,10 @@ export default function Sidebar({ view, setView, account, onLogout }) {
           <div className="sidebar-section">Плейлисты</div>
           <div className="playlist-list">
             {playlists.map(pl => (
-              <button
-                key={pl.kind}
+              <button key={pl.kind}
                 className={`playlist-link ${view.name === 'playlist' && view.playlist?.kind === pl.kind ? 'active' : ''}`}
                 onClick={() => setView({ name: 'playlist', playlist: pl })}
-                title={pl.title}
-              >
+                title={pl.title}>
                 <span className="playlist-dot" />
                 <span className="playlist-name-text">{pl.title}</span>
               </button>
@@ -71,7 +76,7 @@ export default function Sidebar({ view, setView, account, onLogout }) {
           <div className="avatar">{initials(name)}</div>
           <div className="user-info">
             <div className="user-name" title={name}>{name}</div>
-            {sub && <div className="user-sub" title={sub}>@{sub}</div>}
+            {sub && <div className="user-sub" title={sub}>{sub}</div>}
           </div>
           <button className="icon-btn" onClick={onLogout} title="Выйти">
             <IconLogout size={18} />
