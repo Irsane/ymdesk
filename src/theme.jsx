@@ -8,7 +8,8 @@ export const THEMES = [
   { id: 'dark', name: 'Тёмная', hint: 'Фиолетовый акцент' },
   { id: 'superdark', name: 'Супер тёмная', hint: 'Чистый чёрный (OLED)' },
   { id: 'light', name: 'Светлая', hint: 'Дневной режим' },
-  { id: 'snow', name: 'Снежная', hint: 'Снежинки по всему приложению' }
+  { id: 'snow', name: 'Снежная', hint: 'Снежинки по всему приложению' },
+  { id: 'summer', name: 'Летняя', hint: 'Дождь, молнии и травка' }
 ]
 
 export function ThemeProvider({ children }) {
