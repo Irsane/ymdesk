@@ -4,7 +4,7 @@ import { api } from '../api.js'
 // Вход в VK. Основной способ — окно настоящего сайта VK (токен ловится
 // автоматически). Логин/пароль и готовый токен — запасные варианты.
 export default function VkAuthForm({ onConnected }) {
-  const [mode, setMode] = useState('browser') // 'browser' | 'password' | 'token'
+  const [mode, setMode] = useState('password') // 'password' | 'browser' | 'token'
   const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
@@ -56,8 +56,8 @@ export default function VkAuthForm({ onConnected }) {
   return (
     <div className="vk-auth">
       <div className="vk-tabs">
-        <button className={`vk-tab ${mode === 'browser' ? 'active' : ''}`} onClick={() => { setMode('browser'); setError(null) }}>Через VK</button>
         <button className={`vk-tab ${mode === 'password' ? 'active' : ''}`} onClick={() => { setMode('password'); setError(null) }}>Логин/пароль</button>
+        <button className={`vk-tab ${mode === 'browser' ? 'active' : ''}`} onClick={() => { setMode('browser'); setError(null) }}>Через VK</button>
         <button className={`vk-tab ${mode === 'token' ? 'active' : ''}`} onClick={() => { setMode('token'); setError(null) }}>Токен</button>
       </div>
 
@@ -68,8 +68,9 @@ export default function VkAuthForm({ onConnected }) {
           </button>
           {error && <div className="login-error" style={{ marginTop: 10 }}>{error}</div>}
           <p className="hint" style={{ marginTop: 10 }}>
-            Откроется официальная страница VK — вы входите прямо на сайте VK, а
-            приложение само получит доступ. Пароль вводится только на vk.com.
+            Вход на официальной странице VK. ⚠️ Часто такой токен НЕ даёт доступ
+            к музыке (ограничение VK) — если песни не загрузятся, используйте
+            вкладку «Логин/пароль».
           </p>
         </div>
       )}
@@ -89,6 +90,11 @@ export default function VkAuthForm({ onConnected }) {
           <button className="btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
             {busy ? 'Входим…' : 'Войти'}
           </button>
+          <p className="hint" style={{ marginTop: 10 }}>
+            Это единственный способ получить доступ к музыке VK (ограничение VK).
+            Логин и пароль уходят напрямую на <code>oauth.vk.com</code>, нигде не
+            сохраняются — хранится только токен. Код открыт, можно проверить.
+          </p>
         </form>
       )}
 

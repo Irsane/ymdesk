@@ -17,7 +17,12 @@ async function vkFetch(token, method, params = {}) {
   const res = await fetch(url, { headers: { 'User-Agent': UA } })
   const json = await res.json()
   if (json.error) {
-    throw new Error(`VK ${json.error.error_code}: ${json.error.error_msg}`)
+    const code = json.error.error_code
+    // 3 = Unknown method / нет доступа к аудио у этого токена.
+    if (code === 3 || code === 15) {
+      throw new Error('Токен VK без доступа к музыке. Войдите через «Логин/пароль» (вкладка в окне входа VK).')
+    }
+    throw new Error(`VK ${code}: ${json.error.error_msg}`)
   }
   return json.response
 }
