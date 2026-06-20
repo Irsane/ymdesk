@@ -1,6 +1,8 @@
 name: Build Windows
 
-# Собирает Windows .exe (установщик + portable) и публикует в Releases.
+# Собирает Windows .exe (установщик + portable) и публикует в Releases
+# под версией из package.json. Старые релизы и теги удаляются — остаётся
+# только последняя версия.
 on:
   push:
     branches:
@@ -10,7 +12,7 @@ on:
 permissions:
   contents: write
 
-# Новый запуск отменяет предыдущий незавершённый — без гонки за один Release.
+# Новый запуск отменяет предыдущий незавершённый — без гонки за релиз.
 concurrency:
   group: build-windows
   cancel-in-progress: true
@@ -26,6 +28,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          "version=$v" >> $env:GITHUB_OUTPUT
+          "tag=v$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Версия: $v"
 
       - name: Install dependencies
         run: npm ci
@@ -48,25 +59,32 @@ jobs:
           Write-Error "Сборка не удалась после $max попыток"
           exit 1
 
-      # Артефакты сборки доступны во вкладке Actions (запасной способ скачать).
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ymdesk-windows
-          path: |
-            release/*.exe
+      # Удаляем ВСЕ прошлые релизы и их теги — оставляем только текущую версию.
+      - name: Remove old releases
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $keep = "${{ steps.ver.outputs.tag }}"
+          $tags = gh release list --limit 100 --json tagName --jq '.[].tagName'
+          foreach ($t in $tags) {
+            if ($t -and $t -ne $keep) {
+              Write-Host "Удаляю старый релиз $t"
+              gh release delete $t --yes --cleanup-tag
+            }
+          }
 
-      # Публикуем .exe в Release — это и есть прямая ссылка для скачивания.
-      - name: Publish to Release
+      # Публикуем новую версию как отдельный релиз (только свежие файлы).
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: win-latest
-          name: Hailu (Windows)
-          prerelease: true
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: Hailu ${{ steps.ver.outputs.version }}
+          prerelease: false
           body: |
-            Сборка Hailu для Windows.
+            **Hailu ${{ steps.ver.outputs.version }}** — десктоп-клиент для Windows.
 
-            - `Hailu Setup *.exe` — установщик (рекомендуется)
-            - `Hailu *.exe` (portable) — запуск без установки
+            - `Hailu Setup ${{ steps.ver.outputs.version }}.exe` — установщик (рекомендуется)
+            - `Hailu ${{ steps.ver.outputs.version }}.exe` — portable (без установки)
           files: |
             release/*.exe

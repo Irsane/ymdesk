@@ -48,8 +48,10 @@ npm run dev        # Vite (5173) + Electron с hot-reload
 npm run dist       # собирает renderer и упаковывает приложение через electron-builder
 ```
 
-Готовый Windows `.exe` также автоматически собирается в GitHub Actions и
-публикуется в Releases.
+Готовый Windows `.exe` автоматически собирается в GitHub Actions и
+публикуется в Releases под версией из `package.json`. Прошлые релизы
+удаляются — в Releases всегда только последняя версия:
+**https://github.com/Irsane/ymdesk/releases/latest**
 
 ## Как получить OAuth-токен
 
