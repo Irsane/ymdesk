@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react'
 import { useTheme } from '../theme.jsx'
+import { useSettings } from '../settings.jsx'
 
 // Настоящие снежинки (глифы) поверх ВСЕГО приложения — только в теме «снежная».
 const GLYPHS = ['❄', '❅', '❆', '✻', '❉']
 
 export default function SnowOverlay() {
   const { theme } = useTheme()
+  const { bgAnim } = useSettings()
   const canvasRef = useRef(null)
 
   useEffect(() => {
-    if (theme !== 'snow') return
+    if (theme !== 'snow' || !bgAnim) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
 
     const canvas = canvasRef.current
@@ -70,8 +72,8 @@ export default function SnowOverlay() {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [theme])
+  }, [theme, bgAnim])
 
-  if (theme !== 'snow') return null
+  if (theme !== 'snow' || !bgAnim) return null
   return <canvas ref={canvasRef} className="snow-overlay" aria-hidden />
 }

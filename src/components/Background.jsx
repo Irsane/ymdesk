@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useTheme } from '../theme.jsx'
+import { useSettings } from '../settings.jsx'
 
 // Конфиг частиц под каждое оформление.
 const CONFIG = {
@@ -11,11 +12,14 @@ const CONFIG = {
 
 export default function Background() {
   const { theme } = useTheme()
+  const { bgAnim } = useSettings()
   const canvasRef = useRef(null)
 
   useEffect(() => {
+    if (!bgAnim) return
     const cfg = CONFIG[theme] || CONFIG.dark
     const canvas = canvasRef.current
+    if (!canvas) return
     const ctx = canvas.getContext('2d')
     let raf, w, h, particles = []
 
@@ -80,14 +84,14 @@ export default function Background() {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [theme])
+  }, [theme, bgAnim])
 
   return (
     <div className="bg">
       <div className="bg-glow bg-glow-1" />
       <div className="bg-glow bg-glow-2" />
       <div className="bg-glow bg-glow-3" />
-      <canvas ref={canvasRef} className="bg-canvas" />
+      {bgAnim && <canvas ref={canvasRef} className="bg-canvas" />}
     </div>
   )
 }

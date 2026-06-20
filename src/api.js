@@ -32,7 +32,7 @@ export const api = {
   rotorSettings: (station, settings) => call('rotorSettings', station, settings),
   rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId),
 
-  setMini: (on) => window.ym.setMini(on),
+  setMini: (on, size) => window.ym.setMini(on, size),
 
   // VK
   vkOauth: () => ym.vkOauth(),

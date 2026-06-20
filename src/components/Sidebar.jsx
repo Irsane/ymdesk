@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import Logo, { Wordmark } from './Logo.jsx'
-import ThemeSwitcher from './ThemeSwitcher.jsx'
-import { IconHome, IconSearch, IconHeart, IconLogout } from './Icons.jsx'
+import Settings from './Settings.jsx'
+import { IconHome, IconSearch, IconHeart, IconLogout, IconSettings } from './Icons.jsx'
 
 const NAV = [
   { name: 'home', label: 'Главная', Icon: IconHome },
@@ -17,6 +17,7 @@ function initials(name) {
 
 export default function Sidebar({ view, setView, account, vkAccount, source, switchSource, onLogout }) {
   const [playlists, setPlaylists] = useState([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Плейлисты текущего источника.
   useEffect(() => {
@@ -71,7 +72,9 @@ export default function Sidebar({ view, setView, account, vkAccount, source, swi
       {playlists.length === 0 && <div className="sidebar-spacer" />}
 
       <div className="sidebar-footer">
-        <ThemeSwitcher />
+        <button className="theme-btn" onClick={() => setSettingsOpen(true)}>
+          <IconSettings size={18} /> Настройки
+        </button>
         <div className="user-chip">
           <div className="avatar">{initials(name)}</div>
           <div className="user-info">
@@ -83,6 +86,8 @@ export default function Sidebar({ view, setView, account, vkAccount, source, swi
           </button>
         </div>
       </div>
+
+      {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
     </aside>
   )
 }

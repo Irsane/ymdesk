@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
+import { useSettings } from './settings.jsx'
 import Background from './components/Background.jsx'
 import SnowOverlay from './components/SnowOverlay.jsx'
 import Login from './components/Login.jsx'
@@ -20,6 +21,7 @@ export default function App() {
   const [view, setView] = useState({ name: 'home' })
   const [mini, setMini] = useState(false)
   const [vkModal, setVkModal] = useState(false)
+  const { miniSize } = useSettings()
 
   // При старте читаем токены Яндекса и VK.
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function App() {
     setSource(s); setView({ name: 'home' })
   }, [vkAccount])
 
-  const enterMini = useCallback(async () => { await api.setMini(true); setMini(true) }, [])
+  const enterMini = useCallback(async () => { await api.setMini(true, miniSize); setMini(true) }, [miniSize])
   const exitMini = useCallback(async () => { await api.setMini(false); setMini(false) }, [])
 
   if (token === undefined) {

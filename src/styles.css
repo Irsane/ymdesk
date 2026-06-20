@@ -451,6 +451,32 @@ input[type=range] { cursor: pointer; }
 .login-help .hint { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin-top: 10px; }
 .login-help code { background: var(--glass-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 
+/* ---------- Settings ---------- */
+.settings-modal { max-width: 480px; }
+.settings-section { margin-bottom: 22px; }
+.settings-label { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.settings-hint { font-size: 12px; color: var(--muted); }
+.settings-themes { display: flex; flex-direction: column; gap: 3px; }
+.seg { display: flex; gap: 6px; }
+.seg-btn {
+  flex: 1; padding: 10px; border-radius: 11px; font-size: 13px; font-weight: 600; color: var(--muted);
+  background: var(--glass); border: 1px solid var(--glass-line); transition: all .16s;
+}
+.seg-btn:hover { color: var(--text); }
+.seg-btn.active { background: var(--accent-grad); color: #0a0010; border-color: transparent; box-shadow: var(--glow); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.toggle {
+  width: 46px; height: 26px; border-radius: 14px; background: var(--glass-2);
+  border: 1px solid var(--glass-line); position: relative; flex-shrink: 0; transition: background .18s;
+}
+.toggle.on { background: var(--accent-grad); border-color: transparent; }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; transition: transform .18s;
+}
+.toggle.on .toggle-knob { transform: translateX(20px); }
+.settings-foot { font-size: 12px; color: var(--muted); text-align: center; padding-top: 6px; }
+
 /* ---------- VK auth ---------- */
 .vk-tabs { display: flex; gap: 5px; padding: 4px; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 12px; margin-bottom: 16px; }
 .vk-tab { flex: 1; padding: 9px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); transition: all .16s; }

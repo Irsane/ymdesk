@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('ym', {
   rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId),
 
   // Управление окном
-  setMini: (on) => ipcRenderer.invoke('window:set-mini', on),
+  setMini: (on, size) => ipcRenderer.invoke('window:set-mini', on, size),
 
   // VK
   vkOauth: () => ipcRenderer.invoke('vk:oauth'),

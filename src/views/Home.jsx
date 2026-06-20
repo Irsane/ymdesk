@@ -42,10 +42,10 @@ function VkHome({ setView }) {
     })()
   }, [])
 
-  const playRecs = useCallback(async () => {
+  const playMyMusic = useCallback(async () => {
     setRecLoading(true)
     try {
-      const tracks = await api.vkRecommendations()
+      const tracks = await api.vkAudios()
       if (tracks.length) player.playQueue(tracks, 0)
     } catch { /* ignore */ } finally { setRecLoading(false) }
   }, [player])
@@ -56,10 +56,10 @@ function VkHome({ setView }) {
         <div className="wave-orb" aria-hidden><span /><span /><span /></div>
         <div className="wave-body">
           <div className="wave-head">
-            <h2 className="wave-title">Рекомендации VK</h2>
-            <p className="wave-sub">Подборка треков, подобранная VK под вас</p>
+            <h2 className="wave-title">Моя музыка VK</h2>
+            <p className="wave-sub">Все ваши сохранённые треки одним потоком</p>
           </div>
-          <button className="wave-play" onClick={playRecs} disabled={recLoading}>
+          <button className="wave-play" onClick={playMyMusic} disabled={recLoading}>
             {recLoading ? <span className="spinner sm" /> : <IconPlay size={18} />} Слушать
           </button>
         </div>
