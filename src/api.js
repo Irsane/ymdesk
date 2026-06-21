@@ -30,7 +30,8 @@ export const api = {
 
   rotorInfo: (station) => call('rotorInfo', station),
   rotorSettings: (station, settings) => call('rotorSettings', station, settings),
-  rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId),
+  rotorTracks: (station, queue) => call('rotorTracks', station, queue),
+  rotorFeedback: (station, payload) => call('rotorFeedback', station, payload),
 
   setMini: (on, size) => window.ym.setMini(on, size)
 }

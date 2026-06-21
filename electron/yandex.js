@@ -161,14 +161,25 @@ async function setRotorSettings(token, station = 'user:onyourwave', settings = {
   })
 }
 
-// Получить очередную порцию треков станции.
-async function getRotorTracks(token, station = 'user:onyourwave', lastTrackId) {
+// Получить очередную порцию треков станции + batchId (нужен для фидбэка).
+async function getRotorTracks(token, station = 'user:onyourwave', queue) {
   const params = { settings2: true }
-  if (lastTrackId) params.queue = lastTrackId
+  if (queue) params.queue = queue
   const res = await apiFetch(token, `/rotor/station/${station}/tracks`, { params })
-  return (res.sequence || [])
+  const tracks = (res.sequence || [])
     .filter(s => s.type === 'track' && s.track)
     .map(s => s.track)
+  return { tracks, batchId: res.batchId }
+}
+
+// Обратная связь ротору. Без неё станция возвращает ту же пачку треков.
+// type: radioStarted | trackStarted | trackFinished | skip
+async function rotorFeedback(token, station = 'user:onyourwave', payload = {}) {
+  const { batchId, ...body } = payload
+  body.timestamp = new Date().toISOString()
+  const params = {}
+  if (batchId) params['batch-id'] = batchId
+  return apiFetch(token, `/rotor/station/${station}/feedback`, { method: 'POST', params, body })
 }
 
 // Удобный helper: собрать URL обложки нужного размера.
@@ -192,5 +203,6 @@ module.exports = {
   getRotorInfo,
   setRotorSettings,
   getRotorTracks,
+  rotorFeedback,
   coverUrl
 }

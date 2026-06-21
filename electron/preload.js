@@ -25,7 +25,8 @@ contextBridge.exposeInMainWorld('ym', {
   // Моя волна
   rotorInfo: (station) => ipcRenderer.invoke('api:rotor-info', station),
   rotorSettings: (station, settings) => ipcRenderer.invoke('api:rotor-settings', station, settings),
-  rotorTracks: (station, lastTrackId) => ipcRenderer.invoke('api:rotor-tracks', station, lastTrackId),
+  rotorTracks: (station, queue) => ipcRenderer.invoke('api:rotor-tracks', station, queue),
+  rotorFeedback: (station, payload) => ipcRenderer.invoke('api:rotor-feedback', station, payload),
 
   // Управление окном
   setMini: (on, size) => ipcRenderer.invoke('window:set-mini', on, size)

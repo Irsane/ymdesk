@@ -146,4 +146,5 @@ ipcMain.handle('window:set-mini', (_e, on, shape = 'rect') => {
 // Моя волна (rotor)
 ipcMain.handle('api:rotor-info', wrap((station) => yandex.getRotorInfo(tokenOrThrow(), station)))
 ipcMain.handle('api:rotor-settings', wrap((station, settings) => yandex.setRotorSettings(tokenOrThrow(), station, settings)))
-ipcMain.handle('api:rotor-tracks', wrap((station, lastTrackId) => yandex.getRotorTracks(tokenOrThrow(), station, lastTrackId)))
+ipcMain.handle('api:rotor-tracks', wrap((station, queue) => yandex.getRotorTracks(tokenOrThrow(), station, queue)))
+ipcMain.handle('api:rotor-feedback', wrap((station, payload) => yandex.rotorFeedback(tokenOrThrow(), station, payload)))

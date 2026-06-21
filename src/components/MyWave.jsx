@@ -67,19 +67,25 @@ export default function MyWave() {
     setError(null)
     try {
       await api.rotorSettings(STATION, selected).catch(() => {})
-      const tracks = await api.rotorTracks(STATION)
-      if (!tracks.length) throw new Error('Волна не вернула треки')
-      // Запоминаем последний трек и передаём его как queue, чтобы ротор
-      // отдавал НОВЫЕ треки, а не повторял первую пятёрку.
-      let lastId = tracks[tracks.length - 1]?.id
+      const first = await api.rotorTracks(STATION)
+      if (!first.tracks?.length) throw new Error('Волна не вернула треки')
+
+      let batchId = first.batchId
+      let lastId = first.tracks[first.tracks.length - 1]?.id
+      // Сообщаем станции, что радио началось — иначе она зацикливает пачку.
+      api.rotorFeedback(STATION, { type: 'radioStarted', from: 'hailu-desktop', batchId }).catch(() => {})
+
       const extender = async () => {
         try {
-          const more = await api.rotorTracks(STATION, lastId)
-          if (more.length) lastId = more[more.length - 1].id
-          return more
+          // Отмечаем прошлый трек доигранным и просим следующую пачку.
+          await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
+          const res = await api.rotorTracks(STATION, lastId)
+          batchId = res.batchId
+          if (res.tracks?.length) lastId = res.tracks[res.tracks.length - 1].id
+          return res.tracks || []
         } catch { return [] }
       }
-      player.playWave(tracks, extender)
+      player.playWave(first.tracks, extender)
       setOpen(false)
     } catch (e) {
       setError(e.message || 'Не удалось запустить волну')

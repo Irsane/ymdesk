@@ -47,9 +47,6 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Подпись самоподписанным сертификатом (снимает SmartScreen после импорта cert).
-          CSC_LINK: build/cert/hailu.pfx
-          CSC_KEY_PASSWORD: hailu
         run: |
           $max = 3
           for ($i = 1; $i -le $max; $i++) {
@@ -85,17 +82,8 @@ jobs:
           name: Hailu ${{ steps.ver.outputs.version }}
           prerelease: false
           body: |
-            **Hailu ${{ steps.ver.outputs.version }}** — десктоп-клиент для Windows.
+            **Hailu ${{ steps.ver.outputs.version }}** — десктоп-клиент Яндекс Музыки для Windows.
 
-            - `Hailu Setup ${{ steps.ver.outputs.version }}.exe` — установщик (подписан)
-
-            ### Чтобы не появлялось предупреждение SmartScreen
-            1. Скачайте `hailu.cer` и `Доверять-Hailu.bat` (ниже).
-            2. Запустите `Доверять-Hailu.bat` от имени администратора (один раз).
-            3. Устанавливайте `Hailu Setup` — предупреждения больше не будет.
-
-            Либо просто нажмите в окне SmartScreen «Подробнее» → «Выполнить в любом случае».
+            - `Hailu Setup ${{ steps.ver.outputs.version }}.exe` — установщик
           files: |
             release/*Setup*.exe
-            build/cert/hailu.cer
-            build/cert/Доверять-Hailu.bat
