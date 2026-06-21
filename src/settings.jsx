@@ -9,14 +9,14 @@ const load = (key, def) => {
 }
 
 export function SettingsProvider({ children }) {
-  const [miniSize, setMiniSize] = useState(() => load('hailu-mini', 'normal'))
+  const [miniShape, setMiniShape] = useState(() => load('hailu-mini-shape', 'rect')) // 'rect' | 'square'
   const [bgAnim, setBgAnim] = useState(() => load('hailu-bganim', '1') === '1')
 
-  useEffect(() => { localStorage.setItem('hailu-mini', miniSize) }, [miniSize])
+  useEffect(() => { localStorage.setItem('hailu-mini-shape', miniShape) }, [miniShape])
   useEffect(() => { localStorage.setItem('hailu-bganim', bgAnim ? '1' : '0') }, [bgAnim])
 
   return (
-    <SettingsContext.Provider value={{ miniSize, setMiniSize, bgAnim, setBgAnim }}>
+    <SettingsContext.Provider value={{ miniShape, setMiniShape, bgAnim, setBgAnim }}>
       {children}
     </SettingsContext.Provider>
   )

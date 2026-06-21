@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
 import { useSettings } from './settings.jsx'
 import Background from './components/Background.jsx'
-import SnowOverlay from './components/SnowOverlay.jsx'
+import ParticleOverlay from './components/ParticleOverlay.jsx'
 import Login from './components/Login.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import PlayerBar from './components/PlayerBar.jsx'
@@ -17,7 +17,7 @@ export default function App() {
   const [account, setAccount] = useState(null)
   const [view, setView] = useState({ name: 'home' })
   const [mini, setMini] = useState(false)
-  const { miniSize } = useSettings()
+  const { miniShape } = useSettings()
 
   useEffect(() => {
     (async () => {
@@ -37,23 +37,23 @@ export default function App() {
     await api.logout(); setToken(null); setAccount(null); setView({ name: 'home' })
   }, [])
 
-  const enterMini = useCallback(async () => { await api.setMini(true, miniSize); setMini(true) }, [miniSize])
+  const enterMini = useCallback(async () => { await api.setMini(true, miniShape); setMini(true) }, [miniShape])
   const exitMini = useCallback(async () => { await api.setMini(false); setMini(false) }, [])
 
   if (token === undefined) {
     return <><Background /><div className="boot"><div className="spinner" /></div></>
   }
   if (!token) {
-    return <><Background /><SnowOverlay /><Login onLogin={onLogin} /></>
+    return <><Background /><ParticleOverlay /><Login onLogin={onLogin} /></>
   }
   if (mini) {
-    return <MiniPlayer onRestore={exitMini} />
+    return <MiniPlayer shape={miniShape} onRestore={exitMini} />
   }
 
   return (
     <div className="app">
       <Background />
-      <SnowOverlay />
+      <ParticleOverlay />
       <div className="app-body">
         <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
         <main className="content">

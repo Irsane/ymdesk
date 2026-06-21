@@ -32,11 +32,11 @@ img { -webkit-user-drag: none; }
 input[type=range] { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
-  .bg-canvas, .snow-overlay { display: none; }
+  .particle-overlay { display: none; }
 }
 
-/* Снежинки поверх всего приложения */
-.snow-overlay { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9000; pointer-events: none; }
+/* Частицы поверх всего приложения (свои для каждой темы) */
+.particle-overlay { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9000; pointer-events: none; }
 
 /* ===== Темы ===== */
 /* Супер тёмная — чистый чёрный (OLED). */
@@ -112,9 +112,10 @@ input[type=range] { cursor: pointer; }
 .spinner.sm { width: 16px; height: 16px; border-width: 2px; margin: 0; }
 
 /* ---------- Logo ---------- */
-.logo-svg { display: block; border-radius: 14px; box-shadow: var(--glow); }
-.logo-svg.animated { animation: logoBreathe 3.2s ease-in-out infinite; transform-origin: center; }
-@keyframes logoBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.logo-svg { display: block; border-radius: 13px; box-shadow: 0 0 18px rgba(139,92,246,.45); }
+.logo-bars { filter: drop-shadow(0 0 2.5px rgba(139,92,246,.9)); }
+.logo-svg.animated .lbar { transform-box: fill-box; transform-origin: center; animation: eqPulse 1.1s ease-in-out infinite; }
+@keyframes eqPulse { 0%, 100% { transform: scaleY(.5); } 50% { transform: scaleY(1); } }
 .brand-text {
   font-weight: 900; letter-spacing: -.5px;
   background: var(--accent-grad); -webkit-background-clip: text;
@@ -338,6 +339,24 @@ input[type=range] { cursor: pointer; }
 .mini-vol { display: flex; align-items: center; gap: 6px; color: var(--muted); flex-shrink: 0; }
 .mini-vol input[type=range] { width: 64px; }
 .mini-restore { flex-shrink: 0; }
+
+/* Квадратный мини-плеер */
+.mini.square {
+  flex-direction: column; justify-content: center; gap: 10px; padding: 14px;
+  height: 100vh; text-align: center; position: relative;
+}
+.mini.square .mini-cover-lg {
+  width: 150px; height: 150px; border-radius: 14px; overflow: hidden;
+  box-shadow: var(--shadow); flex-shrink: 0;
+}
+.mini.square .mini-cover-lg img { width: 100%; height: 100%; object-fit: cover; }
+.mini.square .mini-cover-lg .cover-ph { width: 100%; height: 100%; display: grid; place-items: center; font-size: 38px; }
+.mini.square .mini-meta.center { width: 100%; }
+.mini.square .mini-title { font-size: 14px; }
+.mini.square .mini-controls { gap: 10px; }
+.mini.square .mini-vol { width: 100%; justify-content: center; }
+.mini.square .mini-vol input[type=range] { width: 120px; }
+.mini.square .mini-restore { position: absolute; top: 10px; right: 10px; }
 
 /* Узкое окно (компактный режим) — прячем второстепенное, чтобы не ломалось. */
 @media (max-width: 430px) { .mini-vol { display: none; } }

@@ -4,15 +4,14 @@ import { useTheme } from '../theme.jsx'
 import { useSettings } from '../settings.jsx'
 import { IconClose, IconCheck } from './Icons.jsx'
 
-const MINI_SIZES = [
-  { id: 'compact', name: 'Компактный' },
-  { id: 'normal', name: 'Обычный' },
-  { id: 'large', name: 'Большой' }
+const MINI_SHAPES = [
+  { id: 'rect', name: 'Прямоугольный' },
+  { id: 'square', name: 'Квадратный' }
 ]
 
 export default function Settings({ onClose }) {
   const { theme, setTheme, themes } = useTheme()
-  const { miniSize, setMiniSize, bgAnim, setBgAnim } = useSettings()
+  const { miniShape, setMiniShape, bgAnim, setBgAnim } = useSettings()
 
   return createPortal(
     <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -40,10 +39,10 @@ export default function Settings({ onClose }) {
           </div>
 
           <div className="settings-section">
-            <div className="settings-label">Размер мини-плеера</div>
+            <div className="settings-label">Мини-плеер</div>
             <div className="seg">
-              {MINI_SIZES.map(s => (
-                <button key={s.id} className={`seg-btn ${miniSize === s.id ? 'active' : ''}`} onClick={() => setMiniSize(s.id)}>
+              {MINI_SHAPES.map(s => (
+                <button key={s.id} className={`seg-btn ${miniShape === s.id ? 'active' : ''}`} onClick={() => setMiniShape(s.id)}>
                   {s.name}
                 </button>
               ))}

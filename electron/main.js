@@ -120,17 +120,16 @@ ipcMain.handle('api:like', wrap((trackId, like) => yandex.setLike(tokenOrThrow()
 
 // Мини-режим окна: компактный плеер поверх остальных окон.
 const MINI_SIZES = {
-  compact: { width: 360, height: 118 },
-  normal: { width: 450, height: 142 },
-  large: { width: 540, height: 172 }
+  rect: { width: 450, height: 142 },
+  square: { width: 300, height: 360 }
 }
 let prevBounds = null
-ipcMain.handle('window:set-mini', (_e, on, size = 'normal') => {
+ipcMain.handle('window:set-mini', (_e, on, shape = 'rect') => {
   if (!mainWindow) return
   if (on) {
     prevBounds = mainWindow.getBounds()
-    const dim = MINI_SIZES[size] || MINI_SIZES.normal
-    mainWindow.setMinimumSize(300, 90)
+    const dim = MINI_SIZES[shape] || MINI_SIZES.rect
+    mainWindow.setMinimumSize(280, 120)
     const wa = screen.getPrimaryDisplay().workAreaSize
     mainWindow.setResizable(false)
     mainWindow.setBounds({ width: dim.width, height: dim.height, x: wa.width - dim.width - 20, y: wa.height - dim.height - 40 })
