@@ -163,8 +163,9 @@ async function setRotorSettings(token, station = 'user:onyourwave', settings = {
 
 // Получить очередную порцию треков станции + batchId (нужен для фидбэка).
 async function getRotorTracks(token, station = 'user:onyourwave', queue) {
-  const params = { settings2: true }
-  if (queue) params.queue = queue
+  // settings2 — только на первом запросе. С queue его слать НЕЛЬЗЯ, иначе
+  // станция каждый раз возвращает одну и ту же стартовую пачку.
+  const params = queue ? { queue } : { settings2: true }
   const res = await apiFetch(token, `/rotor/station/${station}/tracks`, { params })
   const tracks = (res.sequence || [])
     .filter(s => s.type === 'track' && s.track)

@@ -1,6 +1,6 @@
 {
   "name": "hailu",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "Hailu — десктоп-клиент Яндекс Музыки (Electron + React)",
   "main": "electron/main.js",
   "author": "hailu",
@@ -11,7 +11,8 @@
     "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "build": "vite build",
     "start": "cross-env NODE_ENV=production electron .",
-    "dist": "vite build && electron-builder"
+    "dist": "vite build && electron-builder",
+    "test": "node test/queue.test.mjs"
   },
   "build": {
     "appId": "com.hailu.app",

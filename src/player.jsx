@@ -1,20 +1,19 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { api } from './api.js'
+import { Queue, idOf } from './queueEngine.js'
 
 const PlayerContext = createContext(null)
 export const usePlayer = () => useContext(PlayerContext)
 
 export function PlayerProvider({ children }) {
-  // Один общий <audio> на всё приложение.
   const audioRef = useRef(null)
   if (!audioRef.current) audioRef.current = new Audio()
-  const loadTokenRef = useRef(0)
-  const extendingRef = useRef(false)
+  const qRef = useRef(null)
+  if (!qRef.current) qRef.current = new Queue()
 
-  // Источник правды для очереди — refs (чтобы читать актуальное в колбэках).
-  const queueRef = useRef([])
-  const indexRef = useRef(-1)
-  const extenderRef = useRef(null)   // async () => track[] — для бесконечной волны
+  const loadTokenRef = useRef(0)     // отсекает устаревшие загрузки
+  const intendPlayRef = useRef(false) // хотим ли мы сейчас играть (для паузы)
+  const extendingRef = useRef(false)  // идёт фоновая догрузка волны
 
   const [current, setCurrent] = useState(null)
   const [playing, setPlaying] = useState(false)
@@ -23,144 +22,103 @@ export function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [error, setError] = useState(null)
-  const [repeatMode, setRepeatMode] = useState('off') // 'off' | 'all' | 'one'
+  const [repeatMode, setRepeatMode] = useState('off') // off | all | one
   const [shuffle, setShuffle] = useState(false)
 
-  // Зеркала настроек в refs для чтения внутри обработчиков аудио.
-  const repeatRef = useRef(repeatMode)
-  const shuffleRef = useRef(shuffle)
-  useEffect(() => { repeatRef.current = repeatMode }, [repeatMode])
-  useEffect(() => { shuffleRef.current = shuffle }, [shuffle])
+  const repeatRef = useRef(repeatMode); useEffect(() => { repeatRef.current = repeatMode }, [repeatMode])
+  const shuffleRef = useRef(shuffle); useEffect(() => { shuffleRef.current = shuffle }, [shuffle])
 
-  // Проиграть трек по индексу в текущей очереди.
+  // Фоновая догрузка следующей пачки волны.
+  const prefetch = useCallback(() => {
+    const q = qRef.current
+    if (!q.needsPrefetch() || extendingRef.current || !q.extender) return
+    extendingRef.current = true
+    Promise.resolve(q.extender())
+      .then(more => { q.append(more) })
+      .catch(() => {})
+      .finally(() => { extendingRef.current = false })
+  }, [])
+
+  // Проиграть трек по индексу очереди.
   const playAt = useCallback(async (i) => {
-    const track = queueRef.current[i]
+    const q = qRef.current
+    q.setIndex(i)
+    const track = q.current()
     if (!track) return
-    const myToken = ++loadTokenRef.current // токен этой загрузки
-    indexRef.current = i
-    setError(null)
-    setLoading(true)
-    setCurrent(track)
-
-    // Проактивно догружаем следующую пачку волны, пока доигрывают последние
-    // треки — чтобы скип был мгновенным и не упирался в сеть.
-    const q0 = queueRef.current
-    if (extenderRef.current && !extendingRef.current && i >= q0.length - 2) {
-      extendingRef.current = true
-      Promise.resolve(extenderRef.current())
-        .then(more => { if (more && more.length) queueRef.current = [...queueRef.current, ...more] })
-        .catch(() => {})
-        .finally(() => { extendingRef.current = false })
-    }
-
+    const token = ++loadTokenRef.current
+    intendPlayRef.current = true
+    setError(null); setLoading(true); setCurrent(track)
+    prefetch()
     try {
-      const id = track.id || track.trackId
-      const url = await api.trackUrl(String(id))
-      if (myToken !== loadTokenRef.current) return // начат новый трек — выходим
+      const url = await api.trackUrl(String(track.id || track.trackId))
+      if (token !== loadTokenRef.current) return
       if (!url) throw new Error('Нет ссылки на трек')
       const audio = audioRef.current
       audio.src = url
-      try {
-        await audio.play()
-      } catch (err) {
-        // Быстрый скип прерывает play() новым load — это не ошибка.
-        if (err.name === 'AbortError' || myToken !== loadTokenRef.current) return
+      if (!intendPlayRef.current) { setLoading(false); return } // успели нажать паузу
+      try { await audio.play() } catch (err) {
+        if (err.name === 'AbortError' || token !== loadTokenRef.current) return
         throw err
       }
-      if (myToken === loadTokenRef.current) setPlaying(true)
+      if (token === loadTokenRef.current) setPlaying(true)
     } catch (e) {
-      if (myToken === loadTokenRef.current) {
-        setError(e.message || 'Не удалось воспроизвести трек')
-        setPlaying(false)
-      }
+      if (token === loadTokenRef.current) { setError(e.message || 'Не удалось воспроизвести'); setPlaying(false) }
     } finally {
-      if (myToken === loadTokenRef.current) setLoading(false)
+      if (token === loadTokenRef.current) setLoading(false)
     }
-  }, [])
+  }, [prefetch])
 
-  // Запустить обычную очередь треков.
   const playQueue = useCallback((tracks, startIndex = 0) => {
     const clean = (tracks || []).filter(Boolean)
     if (!clean.length) return
-    queueRef.current = clean
-    extenderRef.current = null
+    qRef.current.setList(clean, null)
+    extendingRef.current = false
     playAt(startIndex)
   }, [playAt])
 
-  // Запустить «Мою волну»: начальные треки + функция догрузки следующих.
   const playWave = useCallback((tracks, extender) => {
     const clean = (tracks || []).filter(Boolean)
     if (!clean.length) return
-    queueRef.current = clean
-    extenderRef.current = extender || null
+    qRef.current.setList(clean, extender)
     extendingRef.current = false
     playAt(0)
   }, [playAt])
 
-  // Переход к следующему треку. auto=true — вызван по окончании трека.
   const next = useCallback(async (auto = false) => {
     const audio = audioRef.current
+    const q = qRef.current
+    if (auto && repeatRef.current === 'one') { audio.currentTime = 0; audio.play(); return }
 
-    // Повтор одной песни — только при автопереходе.
-    if (auto && repeatRef.current === 'one') {
-      audio.currentTime = 0
-      audio.play()
-      return
+    let n = q.peekNext({ shuffle: shuffleRef.current, repeat: repeatRef.current })
+    if (n === null && q.extender) {
+      // Очередь кончилась — добираем (на случай, если префетч не успел).
+      try {
+        const more = await q.extender()
+        q.append(more)
+        n = q.peekNext({ shuffle: shuffleRef.current, repeat: repeatRef.current })
+      } catch { /* */ }
     }
-
-    const q = queueRef.current
-    if (!q.length) return
-    let n = shuffleRef.current ? Math.floor(Math.random() * q.length) : indexRef.current + 1
-
-    if (n >= q.length && !shuffleRef.current) {
-      // Догрузить волну, если она активна.
-      if (extenderRef.current) {
-        try {
-          const more = await extenderRef.current()
-          if (more && more.length) {
-            queueRef.current = [...q, ...more]
-            playAt(n)
-            return
-          }
-        } catch { /* игнорируем — просто остановимся */ }
-      }
-      if (repeatRef.current === 'all') n = 0
-      else { setPlaying(false); return }
-    }
+    if (n === null) { intendPlayRef.current = false; setPlaying(false); return }
     playAt(n)
   }, [playAt])
 
   const prev = useCallback(() => {
     const audio = audioRef.current
     if (audio.currentTime > 3) { audio.currentTime = 0; return }
-    const n = indexRef.current - 1
-    if (n < 0) { audio.currentTime = 0; return }
-    playAt(n)
+    playAt(qRef.current.peekPrev())
   }, [playAt])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current
-    if (!queueRef.current.length) return
-    if (audio.paused) { audio.play(); setPlaying(true) }
-    else { audio.pause(); setPlaying(false) }
+    if (!qRef.current.current()) return
+    if (audio.paused) { intendPlayRef.current = true; audio.play().catch(() => {}) }
+    else { intendPlayRef.current = false; audio.pause() }
   }, [])
 
-  const seek = useCallback((sec) => {
-    audioRef.current.currentTime = sec
-    setProgress(sec)
-  }, [])
+  const seek = useCallback((sec) => { audioRef.current.currentTime = sec; setProgress(sec) }, [])
+  const changeVolume = useCallback((v) => { audioRef.current.volume = v; setVolume(v) }, [])
+  const cycleRepeat = useCallback(() => setRepeatMode(m => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off')), [])
 
-  const changeVolume = useCallback((v) => {
-    audioRef.current.volume = v
-    setVolume(v)
-  }, [])
-
-  // Циклическое переключение режима повтора.
-  const cycleRepeat = useCallback(() => {
-    setRepeatMode(m => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'))
-  }, [])
-
-  // Подписки на события <audio>.
   useEffect(() => {
     const audio = audioRef.current
     audio.volume = volume
@@ -185,12 +143,9 @@ export function PlayerProvider({ children }) {
     }
   }, [next]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Горячие клавиши: пробел — пауза/плей.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
-        e.preventDefault(); toggle()
-      }
+      if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); toggle() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -201,8 +156,7 @@ export function PlayerProvider({ children }) {
     error, repeatMode, shuffle,
     playQueue, playWave, toggle, next, prev, seek, changeVolume,
     cycleRepeat, setShuffle,
-    isCurrent: (track) => current && (current.id || current.trackId) === (track.id || track.trackId)
+    isCurrent: (track) => current && idOf(current) === idOf(track)
   }
-
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
 }
