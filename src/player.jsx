@@ -9,6 +9,7 @@ export function PlayerProvider({ children }) {
   const audioRef = useRef(null)
   if (!audioRef.current) audioRef.current = new Audio()
   const loadTokenRef = useRef(0)
+  const extendingRef = useRef(false)
 
   // Источник правды для очереди — refs (чтобы читать актуальное в колбэках).
   const queueRef = useRef([])
@@ -40,6 +41,18 @@ export function PlayerProvider({ children }) {
     setError(null)
     setLoading(true)
     setCurrent(track)
+
+    // Проактивно догружаем следующую пачку волны, пока доигрывают последние
+    // треки — чтобы скип был мгновенным и не упирался в сеть.
+    const q0 = queueRef.current
+    if (extenderRef.current && !extendingRef.current && i >= q0.length - 2) {
+      extendingRef.current = true
+      Promise.resolve(extenderRef.current())
+        .then(more => { if (more && more.length) queueRef.current = [...queueRef.current, ...more] })
+        .catch(() => {})
+        .finally(() => { extendingRef.current = false })
+    }
+
     try {
       const id = track.id || track.trackId
       const url = await api.trackUrl(String(id))
@@ -80,6 +93,7 @@ export function PlayerProvider({ children }) {
     if (!clean.length) return
     queueRef.current = clean
     extenderRef.current = extender || null
+    extendingRef.current = false
     playAt(0)
   }, [playAt])
 
