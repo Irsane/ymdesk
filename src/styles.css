@@ -144,17 +144,6 @@ input[type=range] { cursor: pointer; }
 }
 .sidebar-brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 16px; }
 
-/* Переключатель источников (Яндекс / VK) */
-.source-switch {
-  display: flex; gap: 5px; padding: 4px; margin: 0 4px 14px;
-  background: var(--glass); border: 1px solid var(--glass-line); border-radius: 13px;
-}
-.source-btn {
-  flex: 1; padding: 8px 6px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
-  color: var(--muted); transition: color .16s, background .16s, transform .16s;
-}
-.source-btn:hover { color: var(--text); }
-.source-btn.active { background: var(--accent-grad); color: #0a0010; box-shadow: var(--glow); }
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav-item {
   display: flex; align-items: center; gap: 13px; padding: 11px 13px;
@@ -481,15 +470,6 @@ input[type=range] { cursor: pointer; }
 }
 .toggle.on .toggle-knob { transform: translateX(20px); }
 .settings-foot { font-size: 12px; color: var(--muted); text-align: center; padding-top: 6px; }
-
-/* ---------- VK auth ---------- */
-.vk-tabs { display: flex; gap: 5px; padding: 4px; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 12px; margin-bottom: 16px; }
-.vk-tab { flex: 1; padding: 9px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); transition: all .16s; }
-.vk-tab:hover { color: var(--text); }
-.vk-tab.active { background: var(--accent-grad); color: #0a0010; box-shadow: var(--glow); }
-.vk-auth .token-input { margin-bottom: 12px; }
-.vk-captcha { margin-bottom: 12px; }
-.vk-captcha img { display: block; border-radius: 8px; margin-bottom: 8px; background: #fff; }
 
 /* ---------- Player bar ---------- */
 .playerbar {

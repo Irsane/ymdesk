@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
 import Logo, { Wordmark } from './Logo.jsx'
-import VkAuthForm from './VkAuthForm.jsx'
 
 const OAUTH_URL =
   'https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d'
 
-function YandexForm({ onLogin }) {
+export default function Login({ onLogin }) {
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -25,29 +24,6 @@ function YandexForm({ onLogin }) {
   }
 
   return (
-    <form onSubmit={submit}>
-      <label className="field-label">OAuth-токен</label>
-      <input className="token-input" type="password" placeholder="Вставьте токен сюда"
-        value={token} onChange={(e) => setToken(e.target.value)} autoFocus />
-      {error && <div className="login-error">{error}</div>}
-      <button className="btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
-        {busy ? 'Проверяем…' : 'Войти'}
-      </button>
-      <div className="login-help">
-        <a href={OAUTH_URL} target="_blank" rel="noreferrer">Получить OAuth-токен →</a>
-        <p className="hint">
-          Откройте ссылку, войдите в аккаунт Яндекса и скопируйте значение
-          <code>access_token</code> из адресной строки после редиректа.
-        </p>
-      </div>
-    </form>
-  )
-}
-
-export default function Login({ onLogin, onVk }) {
-  const [tab, setTab] = useState('ya') // 'ya' | 'vk'
-
-  return (
     <div className="login">
       <div className="login-card">
         <div className="login-logo">
@@ -56,12 +32,23 @@ export default function Login({ onLogin, onVk }) {
         </div>
         <p className="login-sub">Музыка без границ</p>
 
-        <div className="vk-tabs" style={{ marginBottom: 18 }}>
-          <button className={`vk-tab ${tab === 'ya' ? 'active' : ''}`} onClick={() => setTab('ya')}>Яндекс Музыка</button>
-          <button className={`vk-tab ${tab === 'vk' ? 'active' : ''}`} onClick={() => setTab('vk')}>VK Музыка</button>
-        </div>
+        <form onSubmit={submit}>
+          <label className="field-label">OAuth-токен</label>
+          <input className="token-input" type="password" placeholder="Вставьте токен сюда"
+            value={token} onChange={(e) => setToken(e.target.value)} autoFocus />
+          {error && <div className="login-error">{error}</div>}
+          <button className="btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
+            {busy ? 'Проверяем…' : 'Войти'}
+          </button>
+        </form>
 
-        {tab === 'ya' ? <YandexForm onLogin={onLogin} /> : <VkAuthForm onConnected={onVk} />}
+        <div className="login-help">
+          <a href={OAUTH_URL} target="_blank" rel="noreferrer">Получить OAuth-токен →</a>
+          <p className="hint">
+            Откройте ссылку, войдите в аккаунт Яндекса и скопируйте значение
+            <code>access_token</code> из адресной строки после редиректа.
+          </p>
+        </div>
       </div>
     </div>
   )

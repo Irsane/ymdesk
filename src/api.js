@@ -32,26 +32,12 @@ export const api = {
   rotorSettings: (station, settings) => call('rotorSettings', station, settings),
   rotorTracks: (station, lastTrackId) => call('rotorTracks', station, lastTrackId),
 
-  setMini: (on, size) => window.ym.setMini(on, size),
-
-  // VK
-  vkAuth: (payload) => ym.vkAuth(payload),
-  vkGetToken: () => ym.vkGetToken(),
-  vkSetToken: (t) => ym.vkSetToken(t),
-  vkGetProfile: () => ym.vkGetProfile(),
-  vkLogout: () => ym.vkLogout(),
-  vkSearch: (q) => call('vkSearch', q),
-  vkAudios: () => call('vkAudios'),
-  vkPlaylists: () => call('vkPlaylists'),
-  vkPlaylist: (ownerId, albumId, accessKey) => call('vkPlaylist', ownerId, albumId, accessKey),
-  vkRecommendations: () => call('vkRecommendations')
+  setMini: (on, size) => window.ym.setMini(on, size)
 }
 
-// Сборка URL обложки нужного размера (логика дублирует main, но без сети).
+// Сборка URL обложки нужного размера.
 export function coverUrl(uri, size = 200) {
   if (!uri) return null
-  // VK отдаёт полный https-URL обложки — используем как есть.
-  if (uri.startsWith('http')) return uri
   return 'https://' + uri.replace('%%', `${size}x${size}`)
 }
 

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
-import Hls from 'hls.js'
 import { api } from './api.js'
 
 const PlayerContext = createContext(null)
@@ -9,7 +8,6 @@ export function PlayerProvider({ children }) {
   // Один общий <audio> на всё приложение.
   const audioRef = useRef(null)
   if (!audioRef.current) audioRef.current = new Audio()
-  const hlsRef = useRef(null)
 
   // Источник правды для очереди — refs (чтобы читать актуальное в колбэках).
   const queueRef = useRef([])
@@ -42,28 +40,10 @@ export function PlayerProvider({ children }) {
     setCurrent(track)
     try {
       const id = track.id || track.trackId
-      // VK отдаёт ссылку сразу; Яндекс — резолвим с подписью.
-      const url = track._source === 'vk' ? track.url : await api.trackUrl(String(id))
+      const url = await api.trackUrl(String(id))
       if (!url) throw new Error('Нет ссылки на трек')
       const audio = audioRef.current
-
-      // Сброс предыдущего HLS, если был.
-      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null }
-
-      if (url.includes('.m3u8') && Hls.isSupported()) {
-        // VK часто отдаёт HLS — проигрываем через hls.js.
-        const hls = new Hls()
-        hlsRef.current = hls
-        hls.loadSource(url)
-        hls.attachMedia(audio)
-        await new Promise((resolve, reject) => {
-          hls.on(Hls.Events.MANIFEST_PARSED, resolve)
-          hls.on(Hls.Events.ERROR, (_e, data) => { if (data.fatal) reject(new Error('Ошибка HLS')) })
-        })
-      } else {
-        audio.removeAttribute('srcObject')
-        audio.src = url
-      }
+      audio.src = url
       await audio.play()
       setPlaying(true)
     } catch (e) {

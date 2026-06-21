@@ -15,31 +15,21 @@ function initials(name) {
     .map(w => w[0]?.toUpperCase()).join('') || 'U'
 }
 
-export default function Sidebar({ view, setView, account, vkAccount, source, switchSource, onLogout }) {
+export default function Sidebar({ view, setView, account, onLogout }) {
   const [playlists, setPlaylists] = useState([])
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Плейлисты текущего источника.
   useEffect(() => {
-    setPlaylists([])
-    const load = source === 'vk' ? api.vkPlaylists() : api.playlists()
-    load.then(setPlaylists).catch(() => {})
-  }, [source])
+    api.playlists().then(setPlaylists).catch(() => {})
+  }, [])
 
-  const name = source === 'vk'
-    ? [vkAccount?.first_name, vkAccount?.last_name].filter(Boolean).join(' ') || 'VK'
-    : (account?.account?.fullName || account?.account?.login || 'Пользователь')
-  const sub = source === 'vk' ? 'VK Музыка' : account?.account?.login
+  const name = account?.account?.fullName || account?.account?.login || 'Пользователь'
+  const sub = account?.account?.login
 
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
         <Logo size={34} animated /> <Wordmark size={22} />
-      </div>
-
-      <div className="source-switch">
-        <button className={`source-btn ${source === 'ya' ? 'active' : ''}`} onClick={() => switchSource('ya')}>Яндекс</button>
-        <button className={`source-btn ${source === 'vk' ? 'active' : ''}`} onClick={() => switchSource('vk')}>VK</button>
       </div>
 
       <nav className="nav">
@@ -79,7 +69,7 @@ export default function Sidebar({ view, setView, account, vkAccount, source, swi
           <div className="avatar">{initials(name)}</div>
           <div className="user-info">
             <div className="user-name" title={name}>{name}</div>
-            {sub && <div className="user-sub" title={sub}>{sub}</div>}
+            {sub && <div className="user-sub" title={sub}>@{sub}</div>}
           </div>
           <button className="icon-btn" onClick={onLogout} title="Выйти">
             <IconLogout size={18} />

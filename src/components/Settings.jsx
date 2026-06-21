@@ -62,7 +62,7 @@ export default function Settings({ onClose }) {
             </div>
           </div>
 
-          <div className="settings-foot">Hailu — десктоп-клиент Яндекс/VK Музыки</div>
+          <div className="settings-foot">Hailu — десктоп-клиент Яндекс Музыки</div>
         </div>
       </div>
     </div>,

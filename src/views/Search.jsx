@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react'
 import { api } from '../api.js'
 import TrackList from '../components/TrackList.jsx'
 
-export default function Search({ source }) {
+export default function Search() {
   const [q, setQ] = useState('')
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(false)
@@ -14,15 +14,11 @@ export default function Search({ source }) {
     if (!text.trim()) { setTracks([]); setSearched(false); return }
     setLoading(true); setError(null)
     try {
-      if (source === 'vk') {
-        setTracks(await api.vkSearch(text.trim()))
-      } else {
-        const res = await api.search(text.trim(), { type: 'track' })
-        setTracks(res.tracks?.results || [])
-      }
+      const res = await api.search(text.trim(), { type: 'track' })
+      setTracks(res.tracks?.results || [])
       setSearched(true)
     } catch (e) { setError(e.message) } finally { setLoading(false) }
-  }, [source])
+  }, [])
 
   const onChange = (e) => {
     const v = e.target.value
@@ -33,7 +29,7 @@ export default function Search({ source }) {
 
   return (
     <div className="view">
-      <h2 className="view-title">Поиск{source === 'vk' ? ' · VK' : ''}</h2>
+      <h2 className="view-title">Поиск</h2>
       <input className="search-input" placeholder="Трек, исполнитель, альбом…"
         value={q} onChange={onChange} onKeyDown={(e) => e.key === 'Enter' && run(q)} autoFocus />
       {loading && <div className="spinner" />}

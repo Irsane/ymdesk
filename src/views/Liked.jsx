@@ -3,7 +3,7 @@ import { api } from '../api.js'
 import { usePlayer } from '../player.jsx'
 import TrackList from '../components/TrackList.jsx'
 
-export default function Liked({ source }) {
+export default function Liked() {
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -11,17 +11,15 @@ export default function Liked({ source }) {
 
   useEffect(() => {
     setLoading(true); setError(null)
-    const load = source === 'vk'
-      ? api.vkAudios()
-      : api.liked().then(t => t.map(x => ({ ...x, liked: true })))
-    load.then(setTracks).catch(e => setError(e.message)).finally(() => setLoading(false))
-  }, [source])
+    api.liked().then(t => t.map(x => ({ ...x, liked: true })))
+      .then(setTracks).catch(e => setError(e.message)).finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="view">
       <div className="view-head">
         <div>
-          <h2 className="view-title">{source === 'vk' ? 'Моя музыка · VK' : 'Мне нравится'}</h2>
+          <h2 className="view-title">Мне нравится</h2>
           <p className="view-sub">{tracks.length} треков</p>
         </div>
         {tracks.length > 0 && (

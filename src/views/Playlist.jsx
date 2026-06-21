@@ -13,25 +13,18 @@ export default function Playlist({ info }) {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    if (info._source === 'vk') {
-      api.vkPlaylist(info.ownerId, info.id, info.accessKey)
-        .then(list => { setData(null); setTracks(list) })
-        .catch(e => setError(e.message))
-        .finally(() => setLoading(false))
-    } else {
-      const ownerUid = info.uid || info.owner?.uid
-      api.playlist(ownerUid, info.kind)
-        .then(pl => {
-          setData(pl)
-          const list = (pl.tracks || []).map(t => t.track || t).filter(Boolean)
-          setTracks(list)
-        })
-        .catch(e => setError(e.message))
-        .finally(() => setLoading(false))
-    }
-  }, [info.uid, info.kind, info._source, info.ownerId, info.id])
+    const ownerUid = info.uid || info.owner?.uid
+    api.playlist(ownerUid, info.kind)
+      .then(pl => {
+        setData(pl)
+        const list = (pl.tracks || []).map(t => t.track || t).filter(Boolean)
+        setTracks(list)
+      })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
+  }, [info.uid, info.kind])
 
-  const cover = coverUrl(data?.cover?.uri || data?.ogImage || info.cover?.uri || info.cover || info.ogImage, 300)
+  const cover = coverUrl(data?.cover?.uri || data?.ogImage || info.cover?.uri || info.ogImage, 300)
 
   return (
     <div className="view">
