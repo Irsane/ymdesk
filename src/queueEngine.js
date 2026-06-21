@@ -14,7 +14,6 @@ export class Queue {
   setList(tracks, extender = null) {
     this.tracks = (tracks || []).filter(Boolean)
     this.index = this.tracks.length ? 0 : -1
-    this.seen = new Set(this.tracks.map(idOf))
     this.extender = extender
   }
 
@@ -22,13 +21,15 @@ export class Queue {
     return this.index >= 0 ? this.tracks[this.index] : null
   }
 
-  // Добавляет только не виденные ранее треки. Возвращает реально добавленные.
-  append(more) {
+  // Добавляет треки, пропуская дубли из «окна» последних RECENT треков.
+  // Так нет повторов рядом, но пул может зацикливаться спустя время.
+  append(more, recent = 80) {
+    const recentIds = new Set(this.tracks.slice(-recent).map(idOf))
     const fresh = []
     for (const t of more || []) {
       const id = idOf(t)
-      if (id && !this.seen.has(id)) {
-        this.seen.add(id)
+      if (id && !recentIds.has(id)) {
+        recentIds.add(id)
         this.tracks.push(t)
         fresh.push(t)
       }

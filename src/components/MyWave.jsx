@@ -70,27 +70,42 @@ export default function MyWave() {
       const first = await api.rotorTracks(STATION)
       if (!first.tracks?.length) throw new Error('Волна не вернула треки')
 
-      // Ротору нужен ПОЛНЫЙ id вида "id:albumId" — иначе queue игнорируется
-      // и станция повторяет ту же пятёрку.
       const fullId = (t) => (t.albums?.[0]?.id ? `${t.id}:${t.albums[0].id}` : String(t.id))
       const seen = new Set(first.tracks.map(t => String(t.id)))
       let batchId = first.batchId
       let lastId = fullId(first.tracks[first.tracks.length - 1])
       api.rotorFeedback(STATION, { type: 'radioStarted', from: 'hailu-desktop', batchId }).catch(() => {})
 
-      const extender = async () => {
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
-            const res = await api.rotorTracks(STATION, lastId)
-            batchId = res.batchId
-            const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
-            if (res.tracks?.length) lastId = fullId(res.tracks[res.tracks.length - 1])
-            if (fresh.length) { fresh.forEach(t => seen.add(String(t.id))); return fresh }
-          } catch { return [] }
-        }
-        return []
+      // Запасной пул, чтобы волна НИКОГДА не зацикливалась и скип всегда
+      // работал: берём «Мне нравится», перемешиваем и выдаём порциями,
+      // если ротор перестал отдавать новые треки.
+      let pool = null, poolPos = 0
+      const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]] } return a }
+      const loadPool = async () => {
+        const liked = await api.liked().catch(() => [])
+        pool = shuffle(liked.filter(Boolean))
       }
+
+      const extender = async () => {
+        // 1) Пытаемся честно догрузить из ротора.
+        try {
+          await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
+          const res = await api.rotorTracks(STATION, lastId)
+          batchId = res.batchId || batchId
+          if (res.tracks?.length) lastId = fullId(res.tracks[res.tracks.length - 1])
+          const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
+          if (fresh.length) { fresh.forEach(t => seen.add(String(t.id))); return fresh }
+        } catch { /* переходим к запасному пулу */ }
+
+        // 2) Ротор не дал новых — отдаём порцию из перемешанного «Мне нравится».
+        if (!pool) await loadPool()
+        if (!pool.length) return []
+        if (poolPos >= pool.length) { shuffle(pool); poolPos = 0 } // зациклить пул
+        const chunk = pool.slice(poolPos, poolPos + 10)
+        poolPos += 10
+        return chunk
+      }
+
       player.playWave(first.tracks, extender)
       setOpen(false)
     } catch (e) {
