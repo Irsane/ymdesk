@@ -2,9 +2,10 @@ import React from 'react'
 import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr, fmtTime } from '../api.js'
 import LikeButton from './LikeButton.jsx'
+import VolumeControl from './VolumeControl.jsx'
 import {
   IconPlay, IconPause, IconNext, IconPrev,
-  IconShuffle, IconRepeat, IconVolume, IconMinimize
+  IconShuffle, IconRepeat, IconMinimize
 } from './Icons.jsx'
 
 export default function PlayerBar({ onMini }) {
@@ -66,14 +67,7 @@ export default function PlayerBar({ onMini }) {
       </div>
 
       <div className="pb-right">
-        <span className="vol-icon"><IconVolume size={19} /></span>
-        <input
-          className="vol"
-          type="range" min={0} max={1} step={0.01}
-          value={p.volume}
-          onChange={(e) => p.changeVolume(parseFloat(e.target.value))}
-          style={{ '--pct': `${p.volume * 100}%` }}
-        />
+        <VolumeControl volume={p.volume} onChange={p.changeVolume} />
         <button className="icon-btn pb-mini" onClick={onMini} title="Мини-плеер">
           <IconMinimize size={18} />
         </button>

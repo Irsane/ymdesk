@@ -2,7 +2,8 @@ import React from 'react'
 import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr } from '../api.js'
 import LikeButton from './LikeButton.jsx'
-import { IconPlay, IconPause, IconNext, IconPrev, IconVolume, IconExpand } from './Icons.jsx'
+import VolumeControl from './VolumeControl.jsx'
+import { IconPlay, IconPause, IconNext, IconPrev, IconExpand } from './Icons.jsx'
 
 // Компактный плеер для мини-режима окна. shape: 'rect' | 'square'.
 export default function MiniPlayer({ shape = 'rect', onRestore }) {
@@ -33,12 +34,7 @@ export default function MiniPlayer({ shape = 'rect', onRestore }) {
           <div className="mini-artist">{track ? artistsStr(track) : 'Выберите трек'}</div>
         </div>
         {Controls}
-        <div className="mini-vol">
-          <IconVolume size={16} />
-          <input type="range" min={0} max={1} step={0.01} value={p.volume}
-            onChange={(e) => p.changeVolume(parseFloat(e.target.value))}
-            style={{ '--pct': `${p.volume * 100}%` }} />
-        </div>
+        <VolumeControl volume={p.volume} onChange={p.changeVolume} />
       </div>
     )
   }
@@ -53,12 +49,7 @@ export default function MiniPlayer({ shape = 'rect', onRestore }) {
         <div className="mini-artist">{track ? artistsStr(track) : 'Выберите трек'}</div>
       </div>
       {Controls}
-      <div className="mini-vol">
-        <IconVolume size={16} />
-        <input type="range" min={0} max={1} step={0.01} value={p.volume}
-          onChange={(e) => p.changeVolume(parseFloat(e.target.value))}
-          style={{ '--pct': `${p.volume * 100}%` }} />
-      </div>
+      <VolumeControl volume={p.volume} onChange={p.changeVolume} compact />
       <button className="icon-btn mini-restore" onClick={onRestore} title="Вернуть полный размер">
         <IconExpand size={18} />
       </button>
