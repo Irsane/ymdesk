@@ -20,7 +20,7 @@ async function vkFetch(token, method, params = {}) {
     const code = json.error.error_code
     // 3 = Unknown method / нет доступа к аудио у этого токена.
     if (code === 3 || code === 15) {
-      throw new Error('Токен VK без доступа к музыке. Войдите через «Логин/пароль» (вкладка в окне входа VK).')
+      throw new Error('Токен VK без доступа к музыке. Выйдите и войдите в VK заново (логин/пароль).')
     }
     throw new Error(`VK ${code}: ${json.error.error_msg}`)
   }

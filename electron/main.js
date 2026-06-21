@@ -121,9 +121,9 @@ ipcMain.handle('api:like', wrap((trackId, like) => yandex.setLike(tokenOrThrow()
 
 // Мини-режим окна: компактный плеер поверх остальных окон.
 const MINI_SIZES = {
-  compact: { width: 330, height: 96 },
-  normal: { width: 400, height: 128 },
-  large: { width: 480, height: 156 }
+  compact: { width: 360, height: 118 },
+  normal: { width: 450, height: 142 },
+  large: { width: 540, height: 172 }
 }
 let prevBounds = null
 ipcMain.handle('window:set-mini', (_e, on, size = 'normal') => {
@@ -155,44 +155,27 @@ const vkUid = () => store.get('vkUid')
 
 // Вход через настоящую страницу VK в отдельном окне — токен ловим из
 // редиректа на blank.html. Пользователь логинится на сайте VK, не у нас.
-// scope=1073737727 — полный набор прав Kate Mobile (включает audio).
-// Без него VK выдаёт токен без доступа к музыке (ошибка 3).
-const VK_OAUTH = 'https://oauth.vk.com/authorize?client_id=2685278&scope=1073737727&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1&v=5.131'
-const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-
-ipcMain.handle('vk:oauth', async () => {
-  return new Promise((resolve) => {
-    const authWin = new BrowserWindow({
-      width: 520, height: 720, title: 'Вход в VK', autoHideMenuBar: true,
-      parent: mainWindow, modal: true,
-      webPreferences: { nodeIntegration: false, contextIsolation: true, partition: 'vk-oauth' }
-    })
-    let done = false
-    const tryUrl = async (url) => {
-      if (done || !url) return
-      const m = url.match(/[#&]access_token=([^&]+)/)
-      if (!m) return
-      done = true
-      const token = m[1]
-      try {
-        store.set('vkToken', token)
-        const profile = await vk.getProfile(token)
-        store.set('vkUid', profile.id)
-        store.set('vkProfile', profile)
-        resolve({ status: 'ok', profile })
-      } catch (e) {
-        resolve({ status: 'error', error: e.message })
-      }
-      try { authWin.close() } catch { /* */ }
+// Вход в VK по логину/паролю (метод Kate Mobile, grant_type=password) —
+// единственный способ получить токен с доступом к музыке. Пароль уходит
+// напрямую в oauth.vk.com и не сохраняется (хранится только токен).
+ipcMain.handle('vk:auth', async (_e, payload) => {
+  try {
+    let deviceId = store.get('vkDeviceId')
+    if (!deviceId) { deviceId = require('crypto').randomBytes(8).toString('hex'); store.set('vkDeviceId', deviceId) }
+    const r = await vk.auth({ ...payload, deviceId })
+    if (r.token) {
+      store.set('vkToken', r.token)
+      const profile = await vk.getProfile(r.token)
+      store.set('vkUid', profile.id)
+      store.set('vkProfile', profile)
+      return { status: 'ok', profile }
     }
-    const wc = authWin.webContents
-    wc.on('will-redirect', (_e, url) => tryUrl(url))
-    wc.on('did-redirect-navigation', (_e, url) => tryUrl(url))
-    wc.on('did-navigate', (_e, url) => tryUrl(url))
-    wc.on('did-navigate-in-page', (_e, url) => tryUrl(url))
-    authWin.on('closed', () => { if (!done) resolve({ status: 'cancelled' }) })
-    authWin.loadURL(VK_OAUTH, { userAgent: DESKTOP_UA })
-  })
+    if (r.needValidation) return { status: '2fa', phone: r.phone }
+    if (r.needCaptcha) return { status: 'captcha', captchaSid: r.captchaSid, captchaImg: r.captchaImg }
+    return { status: 'error', error: 'Не удалось войти' }
+  } catch (e) {
+    return { status: 'error', error: e.message || String(e) }
+  }
 })
 
 ipcMain.handle('vk:get-token', () => store.get('vkToken') || null)
