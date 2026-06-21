@@ -1,6 +1,6 @@
 {
   "name": "hailu",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "description": "Hailu — десктоп-клиент Яндекс Музыки (Electron + React)",
   "main": "electron/main.js",
   "author": "hailu",

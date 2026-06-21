@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { api, coverUrl } from '../api.js'
 import MyWave from '../components/MyWave.jsx'
+import { IconPlay } from '../components/Icons.jsx'
 
 function PlaylistCard({ pl, setView }) {
   const cover = coverUrl(pl.cover?.uri || pl.ogImage, 300)
@@ -8,6 +9,7 @@ function PlaylistCard({ pl, setView }) {
     <button className="card" onClick={() => setView({ name: 'playlist', playlist: pl })}>
       <div className="card-cover">
         {cover ? <img src={cover} alt="" /> : <div className="cover-ph big">♪</div>}
+        <span className="card-play" aria-hidden><IconPlay size={20} /></span>
       </div>
       <div className="card-title">{pl.title}</div>
       <div className="card-sub">{pl.trackCount ? `${pl.trackCount} треков` : 'Плейлист'}</div>
