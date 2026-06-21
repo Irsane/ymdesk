@@ -1,6 +1,7 @@
 import React from 'react'
 import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr } from '../api.js'
+import LikeButton from './LikeButton.jsx'
 import { IconPlay, IconPause, IconNext, IconPrev, IconVolume, IconExpand } from './Icons.jsx'
 
 // Компактный плеер для мини-режима окна. shape: 'rect' | 'square'.
@@ -11,6 +12,7 @@ export default function MiniPlayer({ shape = 'rect', onRestore }) {
 
   const Controls = (
     <div className="mini-controls">
+      <LikeButton track={track} size={18} />
       <button className="pb-btn" onClick={p.prev} title="Назад"><IconPrev size={20} /></button>
       <button className="pb-play sm" onClick={p.toggle} disabled={!track}>
         {p.loading ? <span className="spinner sm" /> : p.playing ? <IconPause size={18} /> : <IconPlay size={18} />}

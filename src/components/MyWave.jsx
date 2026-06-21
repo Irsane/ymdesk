@@ -69,7 +69,16 @@ export default function MyWave() {
       await api.rotorSettings(STATION, selected).catch(() => {})
       const tracks = await api.rotorTracks(STATION)
       if (!tracks.length) throw new Error('Волна не вернула треки')
-      const extender = async () => { try { return await api.rotorTracks(STATION) } catch { return [] } }
+      // Запоминаем последний трек и передаём его как queue, чтобы ротор
+      // отдавал НОВЫЕ треки, а не повторял первую пятёрку.
+      let lastId = tracks[tracks.length - 1]?.id
+      const extender = async () => {
+        try {
+          const more = await api.rotorTracks(STATION, lastId)
+          if (more.length) lastId = more[more.length - 1].id
+          return more
+        } catch { return [] }
+      }
       player.playWave(tracks, extender)
       setOpen(false)
     } catch (e) {

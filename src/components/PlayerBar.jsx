@@ -1,6 +1,7 @@
 import React from 'react'
 import { usePlayer } from '../player.jsx'
 import { coverUrl, artistsStr, fmtTime } from '../api.js'
+import LikeButton from './LikeButton.jsx'
 import {
   IconPlay, IconPause, IconNext, IconPrev,
   IconShuffle, IconRepeat, IconVolume, IconMinimize
@@ -23,6 +24,7 @@ export default function PlayerBar({ onMini }) {
               <div className="pb-title" title={track.title}>{track.title}</div>
               <div className="pb-artist">{artistsStr(track)}</div>
             </div>
+            <LikeButton track={track} />
           </>
         ) : (
           <div className="pb-empty muted">Выберите трек</div>
