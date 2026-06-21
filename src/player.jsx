@@ -8,6 +8,7 @@ export function PlayerProvider({ children }) {
   // Один общий <audio> на всё приложение.
   const audioRef = useRef(null)
   if (!audioRef.current) audioRef.current = new Audio()
+  const loadTokenRef = useRef(0)
 
   // Источник правды для очереди — refs (чтобы читать актуальное в колбэках).
   const queueRef = useRef([])
@@ -34,6 +35,7 @@ export function PlayerProvider({ children }) {
   const playAt = useCallback(async (i) => {
     const track = queueRef.current[i]
     if (!track) return
+    const myToken = ++loadTokenRef.current // токен этой загрузки
     indexRef.current = i
     setError(null)
     setLoading(true)
@@ -41,16 +43,25 @@ export function PlayerProvider({ children }) {
     try {
       const id = track.id || track.trackId
       const url = await api.trackUrl(String(id))
+      if (myToken !== loadTokenRef.current) return // начат новый трек — выходим
       if (!url) throw new Error('Нет ссылки на трек')
       const audio = audioRef.current
       audio.src = url
-      await audio.play()
-      setPlaying(true)
+      try {
+        await audio.play()
+      } catch (err) {
+        // Быстрый скип прерывает play() новым load — это не ошибка.
+        if (err.name === 'AbortError' || myToken !== loadTokenRef.current) return
+        throw err
+      }
+      if (myToken === loadTokenRef.current) setPlaying(true)
     } catch (e) {
-      setError(e.message || 'Не удалось воспроизвести трек')
-      setPlaying(false)
+      if (myToken === loadTokenRef.current) {
+        setError(e.message || 'Не удалось воспроизвести трек')
+        setPlaying(false)
+      }
     } finally {
-      setLoading(false)
+      if (myToken === loadTokenRef.current) setLoading(false)
     }
   }, [])
 

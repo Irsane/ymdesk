@@ -70,20 +70,26 @@ export default function MyWave() {
       const first = await api.rotorTracks(STATION)
       if (!first.tracks?.length) throw new Error('Волна не вернула треки')
 
+      // Ротору нужен ПОЛНЫЙ id вида "id:albumId" — иначе queue игнорируется
+      // и станция повторяет ту же пятёрку.
+      const fullId = (t) => (t.albums?.[0]?.id ? `${t.id}:${t.albums[0].id}` : String(t.id))
+      const seen = new Set(first.tracks.map(t => String(t.id)))
       let batchId = first.batchId
-      let lastId = first.tracks[first.tracks.length - 1]?.id
-      // Сообщаем станции, что радио началось — иначе она зацикливает пачку.
+      let lastId = fullId(first.tracks[first.tracks.length - 1])
       api.rotorFeedback(STATION, { type: 'radioStarted', from: 'hailu-desktop', batchId }).catch(() => {})
 
       const extender = async () => {
-        try {
-          // Отмечаем прошлый трек доигранным и просим следующую пачку.
-          await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
-          const res = await api.rotorTracks(STATION, lastId)
-          batchId = res.batchId
-          if (res.tracks?.length) lastId = res.tracks[res.tracks.length - 1].id
-          return res.tracks || []
-        } catch { return [] }
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
+            const res = await api.rotorTracks(STATION, lastId)
+            batchId = res.batchId
+            const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
+            if (res.tracks?.length) lastId = fullId(res.tracks[res.tracks.length - 1])
+            if (fresh.length) { fresh.forEach(t => seen.add(String(t.id))); return fresh }
+          } catch { return [] }
+        }
+        return []
       }
       player.playWave(first.tracks, extender)
       setOpen(false)
