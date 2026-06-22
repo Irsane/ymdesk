@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { api, coverUrl } from '../api.js'
 import MyWave from '../components/MyWave.jsx'
-import { IconPlay } from '../components/Icons.jsx'
+import { IconPlay, IconHeart, IconSearch } from '../components/Icons.jsx'
 
 function PlaylistCard({ pl, setView }) {
   const cover = coverUrl(pl.cover?.uri || pl.ogImage, 300)
@@ -47,6 +47,24 @@ export default function Home({ setView }) {
   return (
     <div className="view">
       <MyWave />
+
+      <div className="quick-row">
+        <button className="quick-tile" onClick={() => setView({ name: 'liked' })}>
+          <span className="quick-ic heart"><IconHeart size={22} /></span>
+          <span className="quick-tx">
+            <b>Мне нравится</b>
+            <span>Ваши любимые треки</span>
+          </span>
+        </button>
+        <button className="quick-tile" onClick={() => setView({ name: 'search' })}>
+          <span className="quick-ic search"><IconSearch size={22} /></span>
+          <span className="quick-tx">
+            <b>Поиск</b>
+            <span>Найти трек или артиста</span>
+          </span>
+        </button>
+      </div>
+
       <h2 className="view-title section-gap">Подборки для вас</h2>
       <p className="view-sub">Персональные плейлисты на каждый день</p>
       {loading && <div className="spinner" />}
