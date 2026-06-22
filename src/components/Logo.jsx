@@ -10,12 +10,12 @@ export default function Logo({ size = 32, animated = false }) {
       xmlns="http://www.w3.org/2000/svg" className={`logo-svg ${animated ? 'animated' : ''}`}>
       <defs>
         <linearGradient id={`wave-${id}`} x1="0" y1="6" x2="0" y2="42" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#22d3ee" />
-          <stop offset="0.5" stopColor="#8b5cf6" />
-          <stop offset="1" stopColor="#ec4899" />
+          <stop stopColor="#818cf8" />
+          <stop offset="0.5" stopColor="#4ade80" />
+          <stop offset="1" stopColor="#22c55e" />
         </linearGradient>
       </defs>
-      <rect width="48" height="48" rx="13" fill="#0c0b16" />
+      <rect width="48" height="48" rx="13" fill="#13132e" />
       <g className="logo-bars" fill={`url(#wave-${id})`}>
         {BARS.map((h, i) => {
           const cx = 8 + i * 4
