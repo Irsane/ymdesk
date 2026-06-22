@@ -150,3 +150,6 @@ ipcMain.handle('api:rotor-info', wrap((station) => yandex.getRotorInfo(tokenOrTh
 ipcMain.handle('api:rotor-settings', wrap((station, settings) => yandex.setRotorSettings(tokenOrThrow(), station, settings)))
 ipcMain.handle('api:rotor-tracks', wrap((station, queue) => yandex.getRotorTracks(tokenOrThrow(), station, queue)))
 ipcMain.handle('api:rotor-feedback', wrap((station, payload) => yandex.rotorFeedback(tokenOrThrow(), station, payload)))
+ipcMain.handle('api:rotor-session-new', wrap((seeds) => yandex.rotorSessionNew(tokenOrThrow(), seeds)))
+ipcMain.handle('api:rotor-session-tracks', wrap((id, batchId, queue) => yandex.rotorSessionTracks(tokenOrThrow(), id, batchId, queue)))
+ipcMain.handle('api:rotor-session-feedback', wrap((id, payload) => yandex.rotorSessionFeedback(tokenOrThrow(), id, payload)))

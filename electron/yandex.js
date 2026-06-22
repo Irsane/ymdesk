@@ -89,9 +89,15 @@ async function getPlaylist(token, uid, kind) {
 // Понравившиеся треки (только id), затем подгружаем сами треки.
 async function getLikedTracks(token, uid) {
   const liked = await apiFetch(token, `/users/${uid}/likes/tracks`)
-  const ids = (liked.library?.tracks || []).map(t => t.id).slice(0, 200)
+  const ids = (liked.library?.tracks || []).map(t => t.id).slice(0, 1000)
   if (!ids.length) return []
-  return getTracksByIds(token, ids)
+  // Грузим полные треки порциями, чтобы не упереться в лимит запроса.
+  const out = []
+  for (let i = 0; i < ids.length; i += 250) {
+    const part = await getTracksByIds(token, ids.slice(i, i + 250)).catch(() => [])
+    if (Array.isArray(part)) out.push(...part)
+  }
+  return out
 }
 
 // Получить полные данные треков по списку id.
@@ -209,6 +215,41 @@ async function rotorFeedback(token, station = 'user:onyourwave', payload = {}) {
   return apiFetch(token, `/rotor/station/${station}/feedback`, { method: 'POST', params, body })
 }
 
+// --- Моя волна через радио-сессию (надёжный бесконечный поток) ---
+// Это тот же механизм, что использует официальное приложение: сервер
+// сам исключает уже выданные треки (через queue), поэтому повторов нет.
+
+function seqTracks(res) {
+  return (res.sequence || [])
+    .filter(s => s.type === 'track' && s.track)
+    .map(s => s.track)
+}
+
+// Открыть новую радио-сессию по сидам (станция/трек/артист/жанр).
+async function rotorSessionNew(token, seeds = ['user:onyourwave']) {
+  const res = await apiFetch(token, '/rotor/session/new', {
+    method: 'POST',
+    body: { seeds: Array.isArray(seeds) ? seeds : [seeds], includeTracksInResponse: true }
+  })
+  return { radioSessionId: res.radioSessionId, batchId: res.batchId, tracks: seqTracks(res) }
+}
+
+// Следующая пачка треков сессии. queue — id уже выданных треков, чтобы
+// сервер не повторялся.
+async function rotorSessionTracks(token, radioSessionId, batchId, queue = []) {
+  const res = await apiFetch(token, `/rotor/session/${radioSessionId}/batch/${batchId}/tracks`, {
+    method: 'POST',
+    body: { queue }
+  })
+  return { batchId: res.batchId || batchId, tracks: seqTracks(res) }
+}
+
+// Обратная связь сессии (radioStarted / trackStarted / trackFinished / skip).
+async function rotorSessionFeedback(token, radioSessionId, payload = {}) {
+  const body = { ...payload, timestamp: new Date().toISOString() }
+  return apiFetch(token, `/rotor/session/${radioSessionId}/feedback`, { method: 'POST', body })
+}
+
 // Удобный helper: собрать URL обложки нужного размера.
 function coverUrl(uri, size = 400) {
   if (!uri) return null
@@ -233,5 +274,8 @@ module.exports = {
   setRotorSettings,
   getRotorTracks,
   rotorFeedback,
+  rotorSessionNew,
+  rotorSessionTracks,
+  rotorSessionFeedback,
   coverUrl
 }

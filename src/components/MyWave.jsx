@@ -66,47 +66,54 @@ export default function MyWave() {
     setLoading(true)
     setError(null)
     try {
+      // Применяем выбранные настройки (характер/настроение/язык) к станции —
+      // их подхватит новая радио-сессия.
       await api.rotorSettings(STATION, selected).catch(() => {})
-      const first = await api.rotorTracks(STATION)
-      if (!first.tracks?.length) throw new Error('Волна не вернула треки')
 
-      const fullId = (t) => (t.albums?.[0]?.id ? `${t.id}:${t.albums[0].id}` : String(t.id))
-      const seen = new Set(first.tracks.map(t => String(t.id)))
-      let batchId = first.batchId
-      let lastId = fullId(first.tracks[first.tracks.length - 1])
-      api.rotorFeedback(STATION, { type: 'radioStarted', from: 'hailu-desktop', batchId }).catch(() => {})
+      // Открываем радио-сессию: дальше сервер сам исключает уже выданные
+      // треки (через queue), поэтому повторов в потоке нет.
+      const sess = await api.rotorSessionNew([STATION])
+      if (!sess.tracks?.length) throw new Error('Волна не вернула треки')
 
-      // Запасной пул, чтобы волна НИКОГДА не зацикливалась и скип всегда
-      // работал: берём «Мне нравится», перемешиваем и выдаём порциями,
-      // если ротор перестал отдавать новые треки.
+      const sessionId = sess.radioSessionId
+      let batchId = sess.batchId
+      const seen = new Set()
+      let queue = []
+      const register = (arr) => arr.forEach(t => {
+        const id = String(t.id)
+        if (!seen.has(id)) { seen.add(id); queue.push(id) }
+      })
+      register(sess.tracks)
+      api.rotorSessionFeedback(sessionId, { type: 'radioStarted', from: 'hailu-desktop' }).catch(() => {})
+
+      // Запасной пул на самый крайний случай (сессия совсем недоступна),
+      // чтобы скип всегда работал. В норме не используется.
       let pool = null, poolPos = 0
       const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]] } return a }
-      const loadPool = async () => {
-        const liked = await api.liked().catch(() => [])
-        pool = shuffle(liked.filter(Boolean))
-      }
 
       const extender = async () => {
-        // 1) Пытаемся честно догрузить из ротора.
-        try {
-          await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30, batchId }).catch(() => {})
-          const res = await api.rotorTracks(STATION, lastId)
-          batchId = res.batchId || batchId
-          if (res.tracks?.length) lastId = fullId(res.tracks[res.tracks.length - 1])
-          const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
-          if (fresh.length) { fresh.forEach(t => seen.add(String(t.id))); return fresh }
-        } catch { /* переходим к запасному пулу */ }
+        // Сервер исключает выданное по queue. Передаём последние id (хвост),
+        // пробуем пару раз — иногда первая пачка приходит без новинок.
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const tail = queue.slice(-150)
+            const res = await api.rotorSessionTracks(sessionId, batchId, tail)
+            batchId = res.batchId || batchId
+            const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
+            if (fresh.length) { register(fresh); return fresh }
+          } catch { break }
+        }
 
-        // 2) Ротор не дал новых — отдаём порцию из перемешанного «Мне нравится».
-        if (!pool) await loadPool()
+        // Крайний резерв — перемешанное «Мне нравится» (только если сессия молчит).
+        if (!pool) pool = shuffle((await api.liked().catch(() => [])).filter(Boolean))
         if (!pool.length) return []
-        if (poolPos >= pool.length) { shuffle(pool); poolPos = 0 } // зациклить пул
+        if (poolPos >= pool.length) { shuffle(pool); poolPos = 0 }
         const chunk = pool.slice(poolPos, poolPos + 10)
         poolPos += 10
         return chunk
       }
 
-      player.playWave(first.tracks, extender)
+      player.playWave(sess.tracks, extender)
       setOpen(false)
     } catch (e) {
       setError(e.message || 'Не удалось запустить волну')
