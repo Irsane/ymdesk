@@ -109,6 +109,32 @@ async function search(token, text, { type = 'all', page = 0 } = {}) {
   })
 }
 
+// Страница артиста: краткая информация (имя, обложка, счётчики,
+// слушатели в месяц), популярные треки, альбомы и похожие артисты.
+async function getArtist(token, artistId) {
+  const res = await apiFetch(token, `/artists/${artistId}/brief-info`)
+  let popular = res.popularTracks || res.tracks || []
+  // Иногда приходят только id — догружаем полные объекты треков.
+  if (popular.length && !popular[0]?.title) {
+    const ids = popular.map(t => (t && typeof t === 'object' ? t.id : t)).filter(Boolean)
+    try { popular = await getTracksByIds(token, ids) } catch { popular = [] }
+  }
+  return {
+    artist: res.artist || {},
+    albums: res.albums || [],
+    alsoAlbums: res.alsoAlbums || [],
+    popularTracks: popular,
+    similar: res.similarArtists || []
+  }
+}
+
+// Альбом со всеми треками (для перехода с карточки альбома).
+async function getAlbum(token, albumId) {
+  const res = await apiFetch(token, `/albums/${albumId}/with-tracks`)
+  const tracks = (res.volumes || []).flat().filter(Boolean)
+  return { album: res, tracks }
+}
+
 // Лайк/дизлайк трека.
 async function setLike(token, uid, trackId, like) {
   const action = like ? 'add-multiple' : 'remove'
@@ -199,6 +225,8 @@ module.exports = {
   getLikedTracks,
   getTracksByIds,
   search,
+  getArtist,
+  getAlbum,
   setLike,
   getTrackUrl,
   getRotorInfo,

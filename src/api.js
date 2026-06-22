@@ -25,6 +25,8 @@ export const api = {
   playlist: (ownerUid, kind) => call('playlist', ownerUid, kind),
   liked: () => call('liked'),
   search: (text, opts) => call('search', text, opts),
+  artist: (id) => call('artist', id),
+  album: (id) => call('album', id),
   trackUrl: (id) => call('trackUrl', id),
   like: (id, like) => call('like', id, like),
 

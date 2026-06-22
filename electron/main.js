@@ -115,6 +115,8 @@ ipcMain.handle('api:playlists', wrap(() => yandex.getUserPlaylists(tokenOrThrow(
 ipcMain.handle('api:playlist', wrap((ownerUid, kind) => yandex.getPlaylist(tokenOrThrow(), ownerUid || uid(), kind)))
 ipcMain.handle('api:liked', wrap(() => yandex.getLikedTracks(tokenOrThrow(), uid())))
 ipcMain.handle('api:search', wrap((text, opts) => yandex.search(tokenOrThrow(), text, opts)))
+ipcMain.handle('api:artist', wrap((artistId) => yandex.getArtist(tokenOrThrow(), artistId)))
+ipcMain.handle('api:album', wrap((albumId) => yandex.getAlbum(tokenOrThrow(), albumId)))
 ipcMain.handle('api:track-url', wrap((trackId) => yandex.getTrackUrl(tokenOrThrow(), trackId)))
 ipcMain.handle('api:like', wrap((trackId, like) => yandex.setLike(tokenOrThrow(), uid(), trackId, like)))
 

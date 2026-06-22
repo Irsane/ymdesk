@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { usePlayer } from '../player.jsx'
-import { api, coverUrl, artistsStr, fmtTime } from '../api.js'
+import { api, coverUrl, fmtTime } from '../api.js'
+import ArtistLinks from './ArtistLinks.jsx'
 import { IconPlay, IconPause, IconHeart, IconHeartFilled } from './Icons.jsx'
 
 // Универсальный список треков. tracks — массив объектов трека.
@@ -56,7 +57,7 @@ function TrackRow({ track, index, list, player }) {
           {track.title}
           {track.contentWarning && <span className="explicit">E</span>}
         </div>
-        <div className="track-artist">{artistsStr(track)}</div>
+        <div className="track-artist"><ArtistLinks track={track} /></div>
       </div>
 
       <button className={`track-like ${liked ? 'on' : ''}`} onClick={toggleLike} title="Мне нравится">

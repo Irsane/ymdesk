@@ -431,6 +431,36 @@ input[type=range] { cursor: pointer; }
 .playlist-kind { text-transform: uppercase; font-size: 11px; letter-spacing: .1em; color: var(--muted); font-weight: 700; }
 .playlist-name { font-size: 38px; font-weight: 900; margin: 8px 0; letter-spacing: -.8px; }
 
+/* ===================== Страница артиста ===================== */
+.artist-header { display: flex; gap: 28px; align-items: flex-end; margin-bottom: 14px; }
+.artist-cover {
+  width: 200px; height: 200px; border-radius: 50%; overflow: hidden;
+  box-shadow: var(--shadow); flex-shrink: 0; border: 1px solid var(--line);
+}
+.artist-cover img { width: 100%; height: 100%; object-fit: cover; }
+.artist-cover .cover-ph { border-radius: 50%; }
+.artist-info { min-width: 0; }
+.artist-stats {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  color: var(--muted); font-size: 13px; font-weight: 600; margin: 12px 0 18px;
+}
+.artist-stats span:not(:last-child)::after { content: '•'; margin-left: 10px; opacity: .45; }
+.view-title.subtitle { font-size: 22px; }
+.show-more {
+  margin-top: 16px; display: inline-block; padding: 9px 18px; border-radius: 22px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  background: var(--surface-2); border: 1px solid var(--line); transition: all .16s;
+}
+.show-more:hover { color: var(--text); background: var(--surface-3); border-color: var(--line-strong); }
+
+/* Кликабельные имена артистов */
+.artist-link {
+  color: inherit; font: inherit; padding: 0; background: none; border: none;
+  cursor: pointer; transition: color .15s; vertical-align: baseline;
+}
+.artist-link:hover { color: var(--text); text-decoration: underline; }
+.pb-artist .artist-link:hover { color: var(--accent); }
+
 /* ===================== Кнопки ===================== */
 .btn-primary {
   display: inline-flex; align-items: center; gap: 8px;

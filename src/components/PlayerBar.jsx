@@ -1,6 +1,7 @@
 import React from 'react'
 import { usePlayer } from '../player.jsx'
-import { coverUrl, artistsStr, fmtTime } from '../api.js'
+import { coverUrl, fmtTime } from '../api.js'
+import ArtistLinks from './ArtistLinks.jsx'
 import LikeButton from './LikeButton.jsx'
 import VolumeControl from './VolumeControl.jsx'
 import {
@@ -23,7 +24,7 @@ export default function PlayerBar({ onMini }) {
             </div>
             <div className="pb-meta">
               <div className="pb-title" title={track.title}>{track.title}</div>
-              <div className="pb-artist">{artistsStr(track)}</div>
+              <div className="pb-artist"><ArtistLinks track={track} /></div>
             </div>
             <LikeButton track={track} />
           </>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
 import { useSettings } from './settings.jsx'
+import { NavProvider } from './nav.jsx'
 import Background from './components/Background.jsx'
 import ParticleOverlay from './components/ParticleOverlay.jsx'
 import Login from './components/Login.jsx'
@@ -11,6 +12,8 @@ import Home from './views/Home.jsx'
 import Search from './views/Search.jsx'
 import Liked from './views/Liked.jsx'
 import Playlist from './views/Playlist.jsx'
+import Artist from './views/Artist.jsx'
+import Album from './views/Album.jsx'
 
 export default function App() {
   const [token, setToken] = useState(undefined) // undefined = ещё проверяем
@@ -51,19 +54,23 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <Background />
-      <ParticleOverlay />
-      <div className="app-body">
-        <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
-        <main className="content">
-          {view.name === 'home' && <Home setView={setView} />}
-          {view.name === 'search' && <Search />}
-          {view.name === 'liked' && <Liked />}
-          {view.name === 'playlist' && <Playlist info={view.playlist} />}
-        </main>
+    <NavProvider navigate={setView}>
+      <div className="app">
+        <Background />
+        <ParticleOverlay />
+        <div className="app-body">
+          <Sidebar view={view} setView={setView} account={account} onLogout={onLogout} />
+          <main className="content">
+            {view.name === 'home' && <Home setView={setView} />}
+            {view.name === 'search' && <Search setView={setView} />}
+            {view.name === 'liked' && <Liked />}
+            {view.name === 'playlist' && <Playlist info={view.playlist} />}
+            {view.name === 'artist' && <Artist key={view.artistId} info={view} setView={setView} />}
+            {view.name === 'album' && <Album key={view.album?.id} info={view} />}
+          </main>
+        </div>
+        <PlayerBar onMini={enterMini} />
       </div>
-      <PlayerBar onMini={enterMini} />
-    </div>
+    </NavProvider>
   )
 }

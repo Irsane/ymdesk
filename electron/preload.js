@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('ym', {
   playlist: (ownerUid, kind) => ipcRenderer.invoke('api:playlist', ownerUid, kind),
   liked: () => ipcRenderer.invoke('api:liked'),
   search: (text, opts) => ipcRenderer.invoke('api:search', text, opts),
+  artist: (artistId) => ipcRenderer.invoke('api:artist', artistId),
+  album: (albumId) => ipcRenderer.invoke('api:album', albumId),
   trackUrl: (trackId) => ipcRenderer.invoke('api:track-url', trackId),
   like: (trackId, like) => ipcRenderer.invoke('api:like', trackId, like),
 
