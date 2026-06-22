@@ -66,54 +66,92 @@ export default function MyWave() {
     setLoading(true)
     setError(null)
     try {
-      // Применяем выбранные настройки (характер/настроение/язык) к станции —
-      // их подхватит новая радио-сессия.
+      // Применяем выбранные настройки (характер/настроение/язык) к станции.
       await api.rotorSettings(STATION, selected).catch(() => {})
 
-      // Открываем радио-сессию: дальше сервер сам исключает уже выданные
-      // треки (через queue), поэтому повторов в потоке нет.
-      const sess = await api.rotorSessionNew([STATION])
-      if (!sess.tracks?.length) throw new Error('Волна не вернула треки')
-
-      const sessionId = sess.radioSessionId
-      let batchId = sess.batchId
       const seen = new Set()
-      let queue = []
+      let queue = []                 // id выданных треков (для исключения повторов)
       const register = (arr) => arr.forEach(t => {
         const id = String(t.id)
         if (!seen.has(id)) { seen.add(id); queue.push(id) }
       })
-      register(sess.tracks)
-      api.rotorSessionFeedback(sessionId, { type: 'radioStarted', from: 'hailu-desktop' }).catch(() => {})
+      const fullId = (t) => (t.albums?.[0]?.id ? `${t.id}:${t.albums[0].id}` : String(t.id))
 
-      // Запасной пул на самый крайний случай (сессия совсем недоступна),
-      // чтобы скип всегда работал. В норме не используется.
+      // Пытаемся открыть радио-сессию (как в официальном приложении).
+      const sess = await api.rotorSessionNew([STATION]).catch(() => null)
+      let sessionId = sess?.radioSessionId || null
+      let batchId = sess?.batchId || null
+      let firstTracks = sess?.tracks || []
+
+      if (firstTracks.length) {
+        register(firstTracks)
+        api.rotorSessionFeedback(sessionId, { type: 'radioStarted', from: 'hailu-desktop' }).catch(() => {})
+      } else {
+        // Сессия недоступна — берём первую пачку через станцию.
+        const first = await api.rotorTracks(STATION)
+        if (!first.tracks?.length) throw new Error('Волна не вернула треки')
+        firstTracks = first.tracks
+        batchId = first.batchId
+        register(firstTracks)
+        api.rotorFeedback(STATION, { type: 'radioStarted', from: 'hailu-desktop', batchId }).catch(() => {})
+      }
+
+      let lastId = String(firstTracks[firstTracks.length - 1].id)
+      let lastFull = fullId(firstTracks[firstTracks.length - 1])
       let pool = null, poolPos = 0
       const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]] } return a }
 
+      // Догрузка через радио-сессию. trackFinished обязателен — без него
+      // сервер возвращает ту же пачку.
+      const sessionExtend = async () => {
+        if (!sessionId) return []
+        await api.rotorSessionFeedback(sessionId, { type: 'trackFinished', trackId: lastId, totalPlayedSeconds: 30 }).catch(() => {})
+        const res = await api.rotorSessionTracks(sessionId, batchId, queue.slice(-150))
+        batchId = res.batchId || batchId
+        const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
+        if (fresh.length) { register(fresh); lastId = String(fresh[fresh.length - 1].id) }
+        return fresh
+      }
+
+      // Догрузка через станцию (запасной путь ротора).
+      const stationExtend = async () => {
+        await api.rotorFeedback(STATION, { type: 'trackFinished', trackId: lastFull, totalPlayedSeconds: 30, batchId }).catch(() => {})
+        const res = await api.rotorTracks(STATION, lastFull)
+        batchId = res.batchId || batchId
+        const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
+        if (fresh.length) { register(fresh); lastFull = fullId(fresh[fresh.length - 1]) }
+        return fresh
+      }
+
       const extender = async () => {
-        // Сервер исключает выданное по queue. Передаём последние id (хвост),
-        // пробуем пару раз — иногда первая пачка приходит без новинок.
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            const tail = queue.slice(-150)
-            const res = await api.rotorSessionTracks(sessionId, batchId, tail)
-            batchId = res.batchId || batchId
-            const fresh = (res.tracks || []).filter(t => !seen.has(String(t.id)))
-            if (fresh.length) { register(fresh); return fresh }
-          } catch { break }
+        // Сначала честно пробуем оба пути ротора — это настоящие
+        // персональные рекомендации без повторов.
+        for (const fn of [sessionExtend, stationExtend]) {
+          for (let a = 0; a < 2; a++) {
+            try { const fresh = await fn(); if (fresh.length) return fresh } catch { break }
+          }
         }
 
-        // Крайний резерв — перемешанное «Мне нравится» (только если сессия молчит).
-        if (!pool) pool = shuffle((await api.liked().catch(() => [])).filter(Boolean))
+        // Крайний резерв — варьированный пул из чарта (НЕ «Мне нравится»),
+        // чтобы скип всегда работал и поток не скатывался в одни лайки.
+        if (!pool) {
+          let ct = []
+          try {
+            const chart = await api.chart()
+            ct = (chart?.tracks || []).map(x => x.track || x).filter(Boolean)
+          } catch { /* */ }
+          if (!ct.length) ct = (await api.liked().catch(() => [])).filter(Boolean) // абсолютный резерв
+          pool = shuffle(ct.filter(t => !seen.has(String(t.id))))
+        }
         if (!pool.length) return []
         if (poolPos >= pool.length) { shuffle(pool); poolPos = 0 }
         const chunk = pool.slice(poolPos, poolPos + 10)
         poolPos += 10
+        chunk.forEach(t => seen.add(String(t.id)))
         return chunk
       }
 
-      player.playWave(sess.tracks, extender)
+      player.playWave(firstTracks, extender)
       setOpen(false)
     } catch (e) {
       setError(e.message || 'Не удалось запустить волну')

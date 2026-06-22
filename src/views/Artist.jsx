@@ -30,7 +30,9 @@ export default function Artist({ info, setView }) {
   const cover = coverUrl(artist?.cover?.uri || artist?.ogImage, 400)
   const popular = data?.popularTracks || []
   const albums = data?.albums || []
-  const listeners = fmtCount(artist?.ratings?.month)
+  // ratings.month — это позиция в чарте, а не число слушателей; показываем
+  // реальные счётчики: поклонники (лайки артиста), треки, альбомы.
+  const fans = fmtCount(artist?.likesCount)
   const shown = showAll ? popular : popular.slice(0, 10)
 
   return (
@@ -43,7 +45,7 @@ export default function Artist({ info, setView }) {
           <div className="playlist-kind">Исполнитель</div>
           <h2 className="playlist-name">{artist?.name || info.artistName}</h2>
           <div className="artist-stats">
-            {listeners && <span>{listeners} слушателей в месяц</span>}
+            {fans && <span>{fans} поклонников</span>}
             {artist?.counts?.tracks ? <span>{artist.counts.tracks} треков</span> : null}
             {artist?.counts?.directAlbums ? <span>{artist.counts.directAlbums} альбомов</span> : null}
           </div>
