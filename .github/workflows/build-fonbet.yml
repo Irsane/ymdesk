@@ -1,0 +1,67 @@
+name: Build FONBET Arb (Windows)
+
+# Собирает Windows .exe приложения поиска вилок FONBET (папка fonbet-arb/)
+# на Windows-раннере и публикует его в отдельный Release с тегом fonbet-latest.
+# Не трогает релизы музыкального приложения.
+on:
+  push:
+    branches:
+      - claude/sleepy-gauss-wvhlz7
+    paths:
+      - "fonbet-arb/**"
+      - ".github/workflows/build-fonbet.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-fonbet
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: fonbet-arb
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build portable .exe
+        run: >
+          pyinstaller --noconfirm --onefile --windowed --name FonbetArb
+          --add-data "fonbet_arb/sample_line.json;fonbet_arb"
+          run.py
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FonbetArb-windows
+          path: fonbet-arb/dist/FonbetArb.exe
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: fonbet-latest
+          name: FONBET Arb (latest)
+          prerelease: false
+          body: |
+            **FONBET Arb** — приложение поиска вилок в линии FONBET (Windows, portable).
+
+            - `FonbetArb.exe` — запускается без установки.
+            - Без подписи кода Windows может показать SmartScreen: ПКМ → Свойства →
+              «Разблокировать», либо «Подробнее» → «Выполнить в любом случае».
+          files: fonbet-arb/dist/FonbetArb.exe
