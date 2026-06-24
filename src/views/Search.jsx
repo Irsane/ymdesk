@@ -1,41 +1,45 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { api } from '../api.js'
 import TrackList from '../components/TrackList.jsx'
+import { IconSearch } from '../components/Icons.jsx'
 
-export default function Search() {
-  const [q, setQ] = useState('')
+// Запрос приходит из верхней панели (TopBar). Здесь — только результаты.
+export default function Search({ query = '' }) {
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searched, setSearched] = useState(false)
-  const timer = useRef(null)
 
-  const run = useCallback(async (text) => {
-    if (!text.trim()) { setTracks([]); setSearched(false); return }
+  useEffect(() => {
+    const text = query.trim()
+    if (!text) { setTracks([]); setSearched(false); setError(null); return }
+    let live = true
     setLoading(true); setError(null)
-    try {
-      const res = await api.search(text.trim(), { type: 'track' })
-      setTracks(res.tracks?.results || [])
-      setSearched(true)
-    } catch (e) { setError(e.message) } finally { setLoading(false) }
-  }, [])
-
-  const onChange = (e) => {
-    const v = e.target.value
-    setQ(v)
-    clearTimeout(timer.current)
-    timer.current = setTimeout(() => run(v), 400)
-  }
+    api.search(text, { type: 'track' })
+      .then(res => { if (live) { setTracks(res.tracks?.results || []); setSearched(true) } })
+      .catch(e => { if (live) setError(e.message) })
+      .finally(() => { if (live) setLoading(false) })
+    return () => { live = false }
+  }, [query])
 
   return (
     <div className="view">
-      <h2 className="view-title">Поиск</h2>
-      <input className="search-input" placeholder="Трек, исполнитель, альбом…"
-        value={q} onChange={onChange} onKeyDown={(e) => e.key === 'Enter' && run(q)} autoFocus />
+      {!query.trim() && (
+        <div className="empty-state">
+          <span className="empty-ic"><IconSearch size={28} /></span>
+          <div className="empty-title">Что хотите послушать?</div>
+          <div className="empty-sub">Начните вводить запрос в строке поиска сверху.</div>
+        </div>
+      )}
       {loading && <div className="spinner" />}
       {error && <div className="error-box">{error}</div>}
-      {!loading && searched && !tracks.length && <div className="muted">Ничего не найдено.</div>}
-      {!loading && tracks.length > 0 && <TrackList tracks={tracks} />}
+      {!loading && searched && !tracks.length && <div className="muted">По запросу «{query}» ничего не найдено.</div>}
+      {!loading && tracks.length > 0 && (
+        <>
+          <h2 className="view-title">Результаты</h2>
+          <TrackList tracks={tracks} />
+        </>
+      )}
     </div>
   )
 }

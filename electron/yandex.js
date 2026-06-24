@@ -91,13 +91,14 @@ async function getLikedTracks(token, uid) {
   const liked = await apiFetch(token, `/users/${uid}/likes/tracks`)
   const ids = (liked.library?.tracks || []).map(t => t.id).slice(0, 1000)
   if (!ids.length) return []
-  // Грузим полные треки порциями, чтобы не упереться в лимит запроса.
-  const out = []
+  // Грузим полные треки порциями, затем восстанавливаем ИСХОДНЫЙ порядок
+  // лайков (свежие сверху) — /tracks может вернуть их вперемешку.
+  const byId = new Map()
   for (let i = 0; i < ids.length; i += 250) {
     const part = await getTracksByIds(token, ids.slice(i, i + 250)).catch(() => [])
-    if (Array.isArray(part)) out.push(...part)
+    for (const t of (part || [])) if (t) byId.set(String(t.id), t)
   }
-  return out
+  return ids.map(id => byId.get(String(id))).filter(Boolean)
 }
 
 // Получить полные данные треков по списку id.

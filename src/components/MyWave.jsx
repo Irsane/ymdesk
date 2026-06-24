@@ -132,15 +132,22 @@ export default function MyWave() {
           }
         }
 
-        // Крайний резерв — варьированный пул из чарта (НЕ «Мне нравится»),
-        // чтобы скип всегда работал и поток не скатывался в одни лайки.
+        // Резерв, когда ротор не отдаёт новые треки: популярное у ВАШИХ
+        // любимых артистов. Это ощущается «своим» и при этом разнообразно
+        // (не одни ваши лайки и не случайный чарт).
         if (!pool) {
           let ct = []
           try {
-            const chart = await api.chart()
-            ct = (chart?.tracks || []).map(x => x.track || x).filter(Boolean)
+            const liked = (await api.liked().catch(() => [])).filter(Boolean)
+            const freq = new Map()
+            for (const t of liked) for (const a of (t.artists || [])) if (a?.id) freq.set(a.id, (freq.get(a.id) || 0) + 1)
+            const topArtists = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(e => e[0])
+            const lists = await Promise.all(topArtists.map(id => api.artist(id).then(d => d.popularTracks || []).catch(() => [])))
+            ct = lists.flat().filter(Boolean)
           } catch { /* */ }
-          if (!ct.length) ct = (await api.liked().catch(() => [])).filter(Boolean) // абсолютный резерв
+          if (!ct.length) { // абсолютный резерв — чарт
+            try { const chart = await api.chart(); ct = (chart?.tracks || []).map(x => x.track || x).filter(Boolean) } catch { /* */ }
+          }
           pool = shuffle(ct.filter(t => !seen.has(String(t.id))))
         }
         if (!pool.length) return []
